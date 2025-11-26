@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(test:*)",
+      "Bash(python:*)",
+      "Bash(py:*)",
+      "Bash(pip install:*)",
+      "Bash(streamlit run:*)",
+      "Bash(git:*)",
+      "WebFetch(domain:github.com)",
+      "Read(//c/Xscrap/x-financial-analyzer/data/cache/**)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "mcp": {
+    "servers": {
+      "filesystem": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "C:\\MEGABOT\\data",
+          "C:\\MEGABOT\\logs",
+          "C:\\Xscrap\\x-financial-analyzer\\data\\cache"
+        ],
+        "description": "Access to data files, logs, and Twitter cache"
+      },
+      "fetch": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-fetch"
+        ],
+        "description": "HTTP client for FRED API, yfinance, and other web APIs"
+      },
+      "sequential-thinking": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-sequential-thinking"
+        ],
+        "description": "Enhanced reasoning for complex financial analysis"
+      }
+    }
+  }
+}

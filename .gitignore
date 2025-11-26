@@ -21,6 +21,7 @@ logs/
 *.log
 *.json
 !.env.example
+!.claude/settings.example.json
 
 # IDE
 .vscode/
