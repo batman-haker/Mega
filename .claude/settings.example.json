@@ -27,14 +27,6 @@
         ],
         "description": "Access to data files, logs, and Twitter cache"
       },
-      "fetch": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-fetch"
-        ],
-        "description": "HTTP client for FRED API, yfinance, and other web APIs"
-      },
       "sequential-thinking": {
         "command": "npx",
         "args": [
@@ -42,6 +34,25 @@
           "@modelcontextprotocol/server-sequential-thinking"
         ],
         "description": "Enhanced reasoning for complex financial analysis"
+      },
+      "memory": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-memory"
+        ],
+        "description": "Persistent memory and knowledge graph for analysis context"
+      },
+      "gemini": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "github:aliargun/mcp-server-gemini"
+        ],
+        "env": {
+          "GOOGLE_API_KEY": "your_google_api_key_here"
+        },
+        "description": "Google Gemini AI API integration for enhanced analysis"
       }
     }
   }

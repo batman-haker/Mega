@@ -8,7 +8,7 @@ Model Context Protocol (MCP) allows Claude Code to connect to external tools and
 
 ## Configured MCP Servers
 
-MEGABOT uses three MCP servers:
+MEGABOT uses four MCP servers:
 
 ### 1. Filesystem MCP
 **Purpose:** Direct access to data files, logs, and Twitter cache
@@ -23,21 +23,7 @@ MEGABOT uses three MCP servers:
 - Better data management
 - Efficient cache access
 
-### 2. Fetch MCP
-**Purpose:** HTTP client for making API calls
-
-**Use cases:**
-- FRED API requests
-- yfinance data fetching
-- Twitter API calls
-- Any web API integration
-
-**Benefits:**
-- Direct API access without subprocess calls
-- Better error handling
-- Request/response inspection
-
-### 3. Sequential Thinking MCP
+### 2. Sequential Thinking MCP
 **Purpose:** Enhanced reasoning for complex analysis
 
 **Use cases:**
@@ -50,6 +36,35 @@ MEGABOT uses three MCP servers:
 - Structured thinking process
 - Better explanations
 - Improved decision quality
+
+### 3. Memory MCP
+**Purpose:** Persistent knowledge graph for maintaining context across sessions
+
+**Use cases:**
+- Remembering previous analyses
+- Tracking portfolio changes over time
+- Building knowledge about stocks and patterns
+- Maintaining user preferences and insights
+
+**Benefits:**
+- Context persistence across sessions
+- Better long-term analysis
+- Learning from past decisions
+
+### 4. Gemini MCP
+**Purpose:** Direct integration with Google Gemini AI API
+
+**Use cases:**
+- Alternative AI analysis using Gemini models
+- Comparison between Claude and Gemini recommendations
+- Cost optimization (Gemini has free tier)
+- Multi-model validation of investment decisions
+
+**Benefits:**
+- Access to Google's latest Gemini 2.0 models
+- Free tier for development and testing
+- Different AI perspective on market analysis
+- Enhanced vision and multimodal capabilities
 
 ## Installation
 
@@ -119,6 +134,15 @@ Claude will use structured reasoning:
 "Explain your investment recommendation reasoning"
 ```
 
+### Gemini MCP
+
+Claude can invoke Gemini for analysis:
+```
+"Use Gemini to analyze AAPL fundamentals"
+"Compare your AAPL recommendation with Gemini's"
+"Get Gemini's perspective on this market scenario"
+```
+
 ## Troubleshooting
 
 ### MCP servers not starting
@@ -185,10 +209,15 @@ You can add more MCP servers to `.claude\settings.local.json`:
 
 ### Useful MCP Servers for Finance
 
-- **`@modelcontextprotocol/server-sqlite`** - Store analysis in SQL database
-- **`@modelcontextprotocol/server-brave-search`** - Web search for market news
-- **`@modelcontextprotocol/server-memory`** - Persistent memory across sessions
-- **`@modelcontextprotocol/server-github`** - GitHub integration for version control
+Currently installed:
+- ✅ **`@modelcontextprotocol/server-filesystem`** - File operations
+- ✅ **`@modelcontextprotocol/server-sequential-thinking`** - Structured reasoning
+- ✅ **`@modelcontextprotocol/server-memory`** - Persistent memory and knowledge graph
+- ✅ **`github:aliargun/mcp-server-gemini`** - Google Gemini AI integration
+
+Additional servers (community/experimental):
+- **Puppeteer MCP** - Browser automation for web scraping
+- **Custom Finance APIs** - Build your own for Bloomberg, Reuters, etc.
 
 ## Security Notes
 
