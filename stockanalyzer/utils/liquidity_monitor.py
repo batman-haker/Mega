@@ -54,6 +54,24 @@ class LiquidityMonitor:
             'inflation_5y': 'T5YIE',     # 5-Year Breakeven Inflation
             'hy_spread': 'BAMLH0A0HYM2', # High Yield Spread
             'unemployment': 'UNRATE',    # Unemployment Rate
+
+            # TIER 3 - Inflacja i Wzrost (NOWE!)
+            'cpi': 'CPIAUCSL',           # Consumer Price Index (inflacja)
+            'cpi_core': 'CPILFESL',      # Core CPI (bez żywności i energii)
+            'pce': 'PCEPI',              # Personal Consumption Expenditures (Fed preferuje!)
+            'pce_core': 'PCEPILFE',      # Core PCE
+            'gdp': 'GDP',                # Gross Domestic Product (PKB)
+            'gdp_real': 'GDPC1',         # Real GDP (adjusted for inflation)
+
+            # TIER 4 - Stopy Procentowe i Oczekiwania (NOWE!)
+            'fed_funds': 'FEDFUNDS',     # Effective Federal Funds Rate (aktualna stopa Fed)
+            'fed_funds_target': 'DFEDTARU', # Fed Funds Target Rate (Upper)
+            'fed_funds_lower': 'DFEDTARL',  # Fed Funds Target Rate (Lower)
+
+            # TIER 5 - PMI/ISM (Wskaźniki Aktywności) (NOWE!)
+            'ism_manufacturing': 'NAPM',      # ISM Manufacturing Index
+            'ism_services': 'NMFBSNSA',       # ISM Services Index (non-seasonally adjusted)
+            'pmi_composite': 'USPMICMFRBHCQ', # PMI Composite (IHS Markit, quarterly)
         }
         
         # Progi dla alertów (według NY Fed Staff Report 1019)
@@ -94,6 +112,26 @@ class LiquidityMonitor:
             'hy_spread_high': 5.0,     # HY spread > 5% = strach o kredyt
             'unemployment_high': 5.0,  # Bezrobocie > 5% = słabe
             'unemployment_low': 4.0,   # Bezrobocie < 4% = mocne
+
+            # TIER 3 - Inflacja (NOWE!)
+            'cpi_high': 5.0,           # CPI > 5% = wysoka inflacja
+            'cpi_target': 2.0,         # Cel Fed = 2%
+            'cpi_low': 1.0,            # CPI < 1% = deflacja?
+            'pce_high': 4.0,           # PCE > 4% = wysoka (Fed preferuje PCE!)
+            'pce_target': 2.0,         # Cel Fed = 2% PCE
+            'pce_low': 1.0,            # PCE < 1% = deflacja?
+
+            # TIER 4 - PKB (NOWE!)
+            'gdp_strong': 3.0,         # GDP > 3% = silny wzrost
+            'gdp_moderate': 2.0,       # GDP 2-3% = umiarkowany
+            'gdp_weak': 1.0,           # GDP < 1% = słaby
+            'gdp_recession': 0.0,      # GDP < 0% = recesja!
+
+            # TIER 5 - PMI/ISM (NOWE!)
+            'ism_expansion': 50.0,     # ISM > 50 = ekspansja
+            'ism_strong': 55.0,        # ISM > 55 = silny wzrost
+            'ism_contraction': 50.0,   # ISM < 50 = skurcz
+            'ism_weak': 45.0,          # ISM < 45 = słaby
         }
 
         # === SYSTEM WAG ===

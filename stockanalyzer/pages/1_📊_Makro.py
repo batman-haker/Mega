@@ -573,6 +573,298 @@ st.markdown("---")
 
 
 # ============================================
+# INFLACJA, STOPY PROCENTOWE, WZROST (NOWE!)
+# ============================================
+
+st.markdown("### 📊 Inflacja, Stopy Procentowe & Wzrost Gospodarczy")
+st.caption("💡 Najważniejsze wskaźniki makro wpływające na politykę Fed!")
+
+# 3 tabs: Inflacja | Stopy Procentowe | Wzrost Gospodarczy
+tab_infl, tab_rates, tab_growth = st.tabs(["🔥 Inflacja", "💰 Stopy Procentowe", "📈 Wzrost Gospodarczy"])
+
+with tab_infl:
+    st.markdown("#### 🔥 Wskaźniki Inflacji")
+
+    col_inf1, col_inf2, col_inf3, col_inf4 = st.columns(4)
+
+    with col_inf1:
+        cpi_val, cpi_delta = get_indicator_val('cpi')
+        # CPI jest w formacie index, musimy przeliczyć na YoY% (przybliżenie)
+        st.metric(
+            "CPI (Consumer Price Index)",
+            f"{cpi_delta:.1f}%" if cpi_delta else "N/A",
+            help="Wskaźnik cen konsumpcyjnych (YoY change)"
+        )
+        st.caption("🎯 Cel Fed: **2.0%**")
+
+        with st.expander("❓ Co to CPI?"):
+            st.markdown("""
+            **CPI** = Consumer Price Index - Indeks Cen Konsumpcyjnych
+
+            📊 **Co mierzy?**
+            - Średnią zmianę cen koszyka dóbr i usług kupowanych przez gospodarstwa domowe
+            - Obejmuje: żywność, energia, mieszkanie, odzież, transport, opieka zdrowotna
+
+            🎯 **Interpretacja:**
+            - **< 2%** = Niska inflacja (deflacja?)
+            - **~2%** = CEL FED (idealna inflacja!)
+            - **> 3%** = Podwyższona inflacja
+            - **> 5%** = Wysoka inflacja (Fed zacieśnia politykę!)
+
+            💡 **Why it matters:**
+            Fed używa CPI i PCE do monitorowania inflacji. Wysoka inflacja → wyższe stopy procentowe!
+            """)
+
+    with col_inf2:
+        pce_val, pce_delta = get_indicator_val('pce')
+        st.metric(
+            "PCE (Personal Consumption)",
+            f"{pce_delta:.1f}%" if pce_delta else "N/A",
+            help="Preferowany wskaźnik inflacji Fed (YoY)"
+        )
+        st.caption("🎯 **PREFEROWANY przez Fed!**")
+
+        with st.expander("❓ Co to PCE?"):
+            st.markdown("""
+            **PCE** = Personal Consumption Expenditures - Wydatki Konsumpcyjne
+
+            📊 **Dlaczego Fed preferuje PCE nad CPI?**
+            - Obejmuje **szerszy zakres** dóbr i usług
+            - Uwzględnia **substytucję** (gdy chleb drożeje, ludzie kupują ryż)
+            - Bardziej **elastyczny** i **precyzyjny**
+
+            🎯 **Interpretacja:**
+            - **< 2%** = Niska inflacja
+            - **~2%** = CEL FED (mandate!)
+            - **> 2.5%** = Fed zaczyna się martwić
+            - **> 3%** = Fed zacieśnia politykę
+
+            💡 **Core PCE** (bez żywności i energii) to **#1 wskaźnik** dla Fed!
+            """)
+
+    with col_inf3:
+        cpi_core_val, cpi_core_delta = get_indicator_val('cpi_core')
+        st.metric(
+            "Core CPI",
+            f"{cpi_core_delta:.1f}%" if cpi_core_delta else "N/A",
+            help="CPI bez żywności i energii (stabilniejszy)"
+        )
+        st.caption("📌 Bez żywności i energii")
+
+        with st.expander("❓ Dlaczego 'Core'?"):
+            st.markdown("""
+            **Core CPI** = CPI **bez żywności i energii**
+
+            🤔 **Dlaczego wykluczamy żywność i energię?**
+            - Są **bardzo zmienne** (pogoda, geopolityka, OPEC)
+            - Nie odzwierciedlają **trwałych trendów** inflacyjnych
+            - Core CPI pokazuje **bazową presję inflacyjną**
+
+            💡 **Core inflation** jest lepszym wskaźnikiem **długoterminowych trendów**!
+            """)
+
+    with col_inf4:
+        infl_5y_val, infl_5y_delta = get_indicator_val('inflation_5y')
+        st.metric(
+            "5Y Breakeven Inflation",
+            f"{infl_5y_val:.2f}%" if infl_5y_val else "N/A",
+            f"{infl_5y_delta:+.2f}%",
+            help="Oczekiwania inflacyjne na 5 lat (z obligacji)"
+        )
+        st.caption("🔮 **Oczekiwania rynku**")
+
+        with st.expander("❓ Co to Breakeven Inflation?"):
+            st.markdown("""
+            **5Y Breakeven Inflation** = Oczekiwana inflacja na najbliższe 5 lat
+
+            📊 **Jak to działa?**
+            - Różnica między **nominalną** a **realną** rentownością obligacji Treasury
+            - Nominal Treasury Yield - TIPS Yield = Expected Inflation
+
+            🎯 **Interpretacja:**
+            - **< 1.5%** = Rynek spodziewa się deflacji/niskiej inflacji
+            - **~2%** = Oczekiwania zgodne z celem Fed
+            - **> 3%** = Rynek spodziewa się wysokiej inflacji
+
+            💡 Jeśli breakeven > actual inflation → rynek spodziewa się wzrostu inflacji!
+            """)
+
+with tab_rates:
+    st.markdown("#### 💰 Stopy Procentowe")
+
+    col_rate1, col_rate2, col_rate3 = st.columns(3)
+
+    with col_rate1:
+        ff_val, ff_delta = get_indicator_val('fed_funds')
+        st.metric(
+            "Fed Funds Rate",
+            f"{ff_val:.2f}%" if ff_val else "N/A",
+            f"{ff_delta:+.2f}%",
+            help="Efektywna stopa procentowa Fed"
+        )
+        st.caption("🎯 **Aktualna stopa Fed**")
+
+        with st.expander("❓ Co to Fed Funds Rate?"):
+            st.markdown("""
+            **Fed Funds Rate** = Główna stopa procentowa Fed
+
+            📊 **Co to jest?**
+            - Stopa, po której banki pożyczają sobie nawzajem **overnight**
+            - Ustalana przez **FOMC** (Federal Open Market Committee)
+            - Najważniejsza zmienna w polityce monetarnej USA!
+
+            🎯 **Jak wpływa na rynek?**
+            - **Wyższe stopy** → droższe pożyczki → wolniejszy wzrost → niższe akcje
+            - **Niższe stopy** → tańsze pożyczki → szybszy wzrost → wyższe akcje
+
+            💡 Fed zmienia stopy zwykle o **0.25%** (25 basis points) lub **0.50%** (50 bps)
+            """)
+
+    with col_rate2:
+        t10_val, t10_delta = get_indicator_val('treasury_10y')
+        st.metric(
+            "10Y Treasury Yield",
+            f"{t10_val:.2f}%" if t10_val else "N/A",
+            f"{t10_delta:+.2f}%",
+            help="Rentowność 10-letnich obligacji USA"
+        )
+        st.caption("📊 **Benchmark długu**")
+
+        with st.expander("❓ Dlaczego 10Y Treasury?"):
+            st.markdown("""
+            **10Y Treasury** = Rentowność 10-letnich obligacji skarbowych USA
+
+            📊 **Dlaczego to ważne?**
+            - **Benchmark** dla wszystkich długoterminowych stóp procentowych
+            - Wpływa na kredyty hipoteczne, kredyty firmowe
+            - Odzwierciedla oczekiwania rynku co do przyszłości
+
+            🎯 **Interpretacja:**
+            - **< 2%** = Niskie stopy, obawy o wzrost
+            - **2-4%** = Normalne warunki
+            - **> 5%** = Wysokie stopy, Fed walczy z inflacją
+
+            💡 Gdy 10Y > Fed Funds = rynek spodziewa się wyższych stóp w przyszłości!
+            """)
+
+    with col_rate3:
+        t2_val, t2_delta = get_indicator_val('treasury_2y')
+        st.metric(
+            "2Y Treasury Yield",
+            f"{t2_val:.2f}%" if t2_val else "N/A",
+            f"{t2_delta:+.2f}%",
+            help="Rentowność 2-letnich obligacji USA"
+        )
+        st.caption("📉 **Short-term rates**")
+
+        with st.expander("❓ Yield Curve (10Y-2Y)?"):
+            yc = (t10_val - t2_val) if t10_val and t2_val else None
+            if yc:
+                st.metric("10Y-2Y Spread", f"{yc:.2f}%",
+                          delta="INVERTED!" if yc < 0 else "Normal")
+
+            st.markdown("""
+            **Yield Curve Inversion** = 2Y > 10Y (krótkoterminowe wyższe niż długoterminowe)
+
+            🚨 **Dlaczego to ważne?**
+            - Historycznie **najlepszy predyktor recesji**!
+            - Odwrócona krzywa pojawiła się przed każdą recesją od 1960 roku
+            - Zwykle recesja następuje **6-18 miesięcy** po inwersji
+
+            🎯 **Co to oznacza?**
+            - Rynek spodziewa się, że Fed będzie musiał **obniżyć stopy** w przyszłości
+            - Spowolnienie gospodarcze → niższy popyt na kredyty → niższe stopy
+            """)
+
+with tab_growth:
+    st.markdown("#### 📈 Wskaźniki Wzrostu Gospodarczego")
+
+    col_gdp1, col_gdp2, col_gdp3 = st.columns(3)
+
+    with col_gdp1:
+        gdp_val, gdp_delta = get_indicator_val('gdp_real')
+        st.metric(
+            "Real GDP",
+            f"{gdp_delta:.1f}%" if gdp_delta else "N/A",
+            help="Realny PKB (adjusted for inflation, YoY)"
+        )
+        st.caption("📊 **Wzrost gospodarczy USA**")
+
+        with st.expander("❓ Co to GDP?"):
+            st.markdown("""
+            **GDP** = Gross Domestic Product - Produkt Krajowy Brutto
+
+            📊 **Co mierzy?**
+            - **Całkowitą wartość** wszystkich dóbr i usług wyprodukowanych w USA
+            - **Real GDP** = adjusted for inflation (prawdziwy wzrost)
+
+            🎯 **Interpretacja:**
+            - **< 0%** = **RECESJA** (2 kwartały pod rząd = oficjalna recesja)
+            - **0-1%** = Słaby wzrost
+            - **2-3%** = Zdrowy, zrównoważony wzrost
+            - **> 3%** = Silny wzrost (ale może prowadzić do inflacji!)
+
+            💡 Średnia długoterminowa dla USA: **~2.5%**
+            """)
+
+    with col_gdp2:
+        ism_mfg_val, ism_mfg_delta = get_indicator_val('ism_manufacturing')
+        st.metric(
+            "ISM Manufacturing",
+            f"{ism_mfg_val:.1f}" if ism_mfg_val else "N/A",
+            f"{ism_mfg_delta:+.1f}",
+            help="Indeks aktywności przemysłowej"
+        )
+        st.caption("🏭 **Przemysł**")
+
+        with st.expander("❓ Co to ISM?"):
+            st.markdown("""
+            **ISM Manufacturing Index** = Indeks Menedżerów Zakupów (PMI) dla przemysłu
+
+            📊 **Jak to działa?**
+            - Ankieta wśród menedżerów zakupów w firmach produkcyjnych
+            - Pytania o: nowe zamówienia, produkcję, zatrudnienie, dostawy, zapasy
+
+            🎯 **Magiczna liczba: 50**
+            - **> 50** = **EKSPANSJA** (przemysł rośnie!)
+            - **= 50** = Brak zmian
+            - **< 50** = **SKURCZ** (przemysł się kurczy)
+            - **> 55** = Bardzo silny wzrost
+            - **< 45** = Głęboki spadek
+
+            💡 **Leading indicator** - pokazuje trendy przed oficjalnymi danymi GDP!
+            """)
+
+    with col_gdp3:
+        ism_svc_val, ism_svc_delta = get_indicator_val('ism_services')
+        st.metric(
+            "ISM Services",
+            f"{ism_svc_val:.1f}" if ism_svc_val else "N/A",
+            f"{ism_svc_delta:+.1f}",
+            help="Indeks aktywności w usługach"
+        )
+        st.caption("🏢 **Usługi (70% GDP!)**")
+
+        with st.expander("❓ Dlaczego Services > Manufacturing?"):
+            st.markdown("""
+            **ISM Services** = PMI dla sektora usług
+
+            📊 **Dlaczego to ważniejsze?**
+            - Usługi to **~70% amerykańskiego GDP**!
+            - Manufacturing to tylko **~11%**
+            - Usługi: handel, finanse, tech, zdrowie, edukacja, transport
+
+            🎯 **Interpretacja (podobnie jak Manufacturing):**
+            - **> 50** = Ekspansja
+            - **< 50** = Skurcz
+
+            💡 Jeśli Services spada, ale Manufacturing rośnie → nie wystarczy do uniknięcia recesji!
+            """)
+
+st.markdown("---")
+
+
+# ============================================
 # LIQUIDITY INDICATORS (TGA, Reserves, RRP, Fed Balance)
 # ============================================
 
