@@ -144,7 +144,7 @@ if 'stock_data' in st.session_state:
             {data['sector']} • {data['industry']}
         </p>
         <p style="color: #606060; font-size: 0.9rem; margin: 0.3rem 0 0 0;">
-            Ticker: {data['ticker']} | Updated: {data['last_updated']}
+            Ticker: {data['ticker']} | Updated: {data['last_updated']} {'| <span style="color: #39ff14; font-weight: bold;">⚡ FROM CACHE (TTL: 15min)</span>' if data.get('from_cache', False) else ''}
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -442,6 +442,193 @@ if 'stock_data' in st.session_state:
 
         else:
             st.warning("Brak danych historycznych")
+
+        # MACD Chart
+        st.markdown("---")
+        st.markdown("### 📊 MACD (Moving Average Convergence Divergence)")
+
+        tech = data['technicals']
+        macd_data = tech.get('macd')
+
+        if macd_data and data['history']:
+            df_hist = pd.DataFrame(data['history'])
+            df_hist['date'] = pd.to_datetime(df_hist['date'])
+
+            fig_macd = make_subplots(
+                rows=2, cols=1,
+                shared_xaxes=True,
+                vertical_spacing=0.03,
+                subplot_titles=('MACD Line & Signal', 'Histogram'),
+                row_heights=[0.6, 0.4]
+            )
+
+            # MACD Line
+            fig_macd.add_trace(
+                go.Scatter(
+                    x=df_hist['date'],
+                    y=macd_data['macd_line'],
+                    mode='lines',
+                    name='MACD',
+                    line=dict(color='#00f5ff', width=2)
+                ),
+                row=1, col=1
+            )
+
+            # Signal Line
+            fig_macd.add_trace(
+                go.Scatter(
+                    x=df_hist['date'],
+                    y=macd_data['signal_line'],
+                    mode='lines',
+                    name='Signal',
+                    line=dict(color='#ff006e', width=2)
+                ),
+                row=1, col=1
+            )
+
+            # Histogram
+            colors = ['#39ff14' if h > 0 else '#ff073a' for h in macd_data['histogram']]
+            fig_macd.add_trace(
+                go.Bar(
+                    x=df_hist['date'],
+                    y=macd_data['histogram'],
+                    name='Histogram',
+                    marker_color=colors,
+                    opacity=0.6
+                ),
+                row=2, col=1
+            )
+
+            # Apply theme
+            theme_config = apply_chart_theme()
+            theme_config.pop('title', None)
+            theme_config.pop('legend', None)
+
+            fig_macd.update_layout(
+                **theme_config,
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+
+            fig_macd.update_xaxes(gridcolor='rgba(0, 245, 255, 0.1)')
+            fig_macd.update_yaxes(gridcolor='rgba(0, 245, 255, 0.1)')
+
+            st.plotly_chart(fig_macd, use_container_width=True)
+
+            # MACD metrics
+            col_macd1, col_macd2, col_macd3 = st.columns(3)
+            with col_macd1:
+                st.metric("MACD", f"{macd_data['current_macd']:.4f}")
+            with col_macd2:
+                st.metric("Signal", f"{macd_data['current_signal']:.4f}")
+            with col_macd3:
+                hist_val = macd_data['current_histogram']
+                st.metric("Histogram", f"{hist_val:.4f}", delta="Bullish" if hist_val > 0 else "Bearish")
+
+        else:
+            st.info("Brak wystarczających danych do obliczenia MACD (wymagane: 26 dni)")
+
+        # Bollinger Bands Chart
+        st.markdown("---")
+        st.markdown("### 📈 Bollinger Bands")
+
+        bb_data = tech.get('bollinger_bands')
+
+        if bb_data and data['history']:
+            df_hist = pd.DataFrame(data['history'])
+            df_hist['date'] = pd.to_datetime(df_hist['date'])
+
+            fig_bb = go.Figure()
+
+            # Upper Band
+            fig_bb.add_trace(
+                go.Scatter(
+                    x=df_hist['date'],
+                    y=bb_data['upper_band'],
+                    mode='lines',
+                    name='Upper Band',
+                    line=dict(color='#ff006e', width=1, dash='dash')
+                )
+            )
+
+            # Middle Band (SMA)
+            fig_bb.add_trace(
+                go.Scatter(
+                    x=df_hist['date'],
+                    y=bb_data['middle_band'],
+                    mode='lines',
+                    name='SMA (20)',
+                    line=dict(color='#ffed4e', width=2)
+                )
+            )
+
+            # Lower Band
+            fig_bb.add_trace(
+                go.Scatter(
+                    x=df_hist['date'],
+                    y=bb_data['lower_band'],
+                    mode='lines',
+                    name='Lower Band',
+                    line=dict(color='#ff006e', width=1, dash='dash'),
+                    fill='tonexty',
+                    fillcolor='rgba(255, 0, 110, 0.1)'
+                )
+            )
+
+            # Price (Close)
+            fig_bb.add_trace(
+                go.Scatter(
+                    x=df_hist['date'],
+                    y=df_hist['close'],
+                    mode='lines',
+                    name='Close Price',
+                    line=dict(color='#00f5ff', width=2)
+                )
+            )
+
+            # Apply theme
+            theme_config = apply_chart_theme()
+            theme_config.pop('title', None)
+            theme_config.pop('legend', None)
+
+            fig_bb.update_layout(
+                **theme_config,
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+
+            fig_bb.update_xaxes(gridcolor='rgba(0, 245, 255, 0.1)')
+            fig_bb.update_yaxes(gridcolor='rgba(0, 245, 255, 0.1)')
+
+            st.plotly_chart(fig_bb, use_container_width=True)
+
+            # Bollinger Bands metrics
+            col_bb1, col_bb2, col_bb3, col_bb4 = st.columns(4)
+            with col_bb1:
+                st.metric("Upper Band", f"${bb_data['current_upper']:.2f}")
+            with col_bb2:
+                st.metric("SMA (20)", f"${bb_data['current_middle']:.2f}")
+            with col_bb3:
+                st.metric("Lower Band", f"${bb_data['current_lower']:.2f}")
+            with col_bb4:
+                st.metric("Bandwidth", f"{bb_data['bandwidth']:.2f}%")
+
+        else:
+            st.info("Brak wystarczających danych do obliczenia Bollinger Bands (wymagane: 20 dni)")
 
     with tab3:
         # Fundamentals & Technicals tables

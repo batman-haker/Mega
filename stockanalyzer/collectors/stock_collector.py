@@ -14,18 +14,27 @@ Użycie:
 
 import yfinance as yf
 import pandas as pd
-from typing import Dict, Optional, Any
+import json
+from typing import Dict, Optional, Any, Tuple
 from datetime import datetime, timedelta
 from .stock_analyzer import StockAnalyzer, AnalysisResult, Recommendation
+from database.db import DatabaseSession
+from database.models import StockCache
 
 
-def get_stock_data(ticker: str, period: str = "3mo") -> Dict[str, Any]:
+def get_stock_data(ticker: str, period: str = "3mo", use_cache: bool = True) -> Dict[str, Any]:
     """
     Pobiera kompletne dane akcji z Yahoo Finance i wykonuje smart analysis.
+
+    CACHE STRATEGY:
+    - TTL: 15 minut (real-time quotes potrzebują częstej aktualizacji)
+    - Sprawdza DB przed API call
+    - Zapisuje do DB po pobraniu
 
     Args:
         ticker: Symbol giełdowy (np. 'AAPL', 'MSFT', 'PKO.WA')
         period: Okres historyczny ('1mo', '3mo', '6mo', '1y', '5y')
+        use_cache: Czy użyć cache z DB (default: True)
 
     Returns:
         Dictionary z:
@@ -42,10 +51,28 @@ def get_stock_data(ticker: str, period: str = "3mo") -> Dict[str, Any]:
         🟢 STRONG BUY
     """
 
-    # 1. Pobierz z Yahoo Finance
-    stock = yf.Ticker(ticker)
-    info = stock.info
-    history = stock.history(period=period)
+    # Normalizuj ticker (uppercase)
+    ticker = ticker.upper()
+
+    # 0. Sprawdź CACHE (jeśli use_cache=True)
+    from_cache = False
+    if use_cache:
+        cached_data = _get_from_cache(ticker)
+        if cached_data:
+            # Cache HIT! Używamy cached RAW data
+            info, history = cached_data
+            from_cache = True
+            print(f"[CACHE] Using cached data for {ticker}")
+        else:
+            # Cache MISS - pobierz z Yahoo Finance
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            history = stock.history(period=period)
+    else:
+        # Cache disabled - pobierz z Yahoo Finance
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        history = stock.history(period=period)
 
     if history.empty:
         raise ValueError(f"Nie znaleziono danych dla tickera: {ticker}")
@@ -66,8 +93,8 @@ def get_stock_data(ticker: str, period: str = "3mo") -> Dict[str, Any]:
     # 5. Format candlestick data dla Plotly
     candlestick_data = _format_candlestick_data(history)
 
-    # 6. Return kompletny package
-    return {
+    # 6. Prepare complete package
+    result = {
         # Basic Info
         'ticker': ticker.upper(),
         'company_name': info.get('longName', ticker),
@@ -104,8 +131,17 @@ def get_stock_data(ticker: str, period: str = "3mo") -> Dict[str, Any]:
         'history': candlestick_data,
 
         # Timestamp
-        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+
+        # Cache metadata
+        'from_cache': from_cache
     }
+
+    # 7. Zapisz do cache (jeśli use_cache=True i nie było z cache)
+    if use_cache and not from_cache:
+        _save_to_cache(ticker, info, history)
+
+    return result
 
 
 def search_tickers(query: str, limit: int = 10) -> list:
@@ -239,6 +275,20 @@ def _extract_technicals(info: dict, history: pd.DataFrame) -> Dict[str, Any]:
     else:
         technicals['rsi'] = None
 
+    # MACD calculation
+    if not history.empty and len(history) >= 26:
+        macd_data = _calculate_macd(history['Close'])
+        technicals['macd'] = macd_data
+    else:
+        technicals['macd'] = None
+
+    # Bollinger Bands calculation
+    if not history.empty and len(history) >= 20:
+        bb_data = _calculate_bollinger_bands(history['Close'], period=20, std_dev=2)
+        technicals['bollinger_bands'] = bb_data
+    else:
+        technicals['bollinger_bands'] = None
+
     # Volume analysis
     if not history.empty:
         technicals['avg_volume'] = history['Volume'].tail(30).mean()
@@ -303,6 +353,110 @@ def _calculate_rsi(prices: pd.Series, period: int = 14) -> Optional[float]:
         return None
 
 
+def _calculate_macd(prices: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> Optional[Dict[str, Any]]:
+    """
+    Oblicza MACD (Moving Average Convergence Divergence).
+
+    Args:
+        prices: Series z cenami zamknięcia
+        fast: Okres dla szybkiej EMA (default: 12)
+        slow: Okres dla wolnej EMA (default: 26)
+        signal: Okres dla linii sygnału (default: 9)
+
+    Returns:
+        Dict z:
+            - macd_line: Lista wartości MACD
+            - signal_line: Lista wartości linii sygnału
+            - histogram: Lista wartości histogramu
+            - current_macd: Aktualna wartość MACD
+            - current_signal: Aktualna wartość sygnału
+            - current_histogram: Aktualna wartość histogramu
+    """
+    if len(prices) < slow:
+        return None
+
+    try:
+        # Oblicz EMA
+        ema_fast = prices.ewm(span=fast, adjust=False).mean()
+        ema_slow = prices.ewm(span=slow, adjust=False).mean()
+
+        # MACD Line = EMA(12) - EMA(26)
+        macd_line = ema_fast - ema_slow
+
+        # Signal Line = EMA(9) of MACD Line
+        signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+
+        # Histogram = MACD - Signal
+        histogram = macd_line - signal_line
+
+        return {
+            'macd_line': macd_line.tolist(),
+            'signal_line': signal_line.tolist(),
+            'histogram': histogram.tolist(),
+            'current_macd': round(macd_line.iloc[-1], 4),
+            'current_signal': round(signal_line.iloc[-1], 4),
+            'current_histogram': round(histogram.iloc[-1], 4),
+        }
+
+    except (IndexError, KeyError):
+        return None
+
+
+def _calculate_bollinger_bands(prices: pd.Series, period: int = 20, std_dev: float = 2) -> Optional[Dict[str, Any]]:
+    """
+    Oblicza Bollinger Bands.
+
+    Args:
+        prices: Series z cenami zamknięcia
+        period: Okres dla SMA (default: 20)
+        std_dev: Liczba odchyleń standardowych (default: 2)
+
+    Returns:
+        Dict z:
+            - upper_band: Lista wartości górnego pasma
+            - middle_band: Lista wartości środkowego pasma (SMA)
+            - lower_band: Lista wartości dolnego pasma
+            - current_upper: Aktualna wartość górnego pasma
+            - current_middle: Aktualna wartość SMA
+            - current_lower: Aktualna wartość dolnego pasma
+            - bandwidth: Szerokość pasma (%)
+    """
+    if len(prices) < period:
+        return None
+
+    try:
+        # Middle Band = SMA
+        middle_band = prices.rolling(window=period).mean()
+
+        # Standard Deviation
+        std = prices.rolling(window=period).std()
+
+        # Upper Band = SMA + (std_dev * STD)
+        upper_band = middle_band + (std_dev * std)
+
+        # Lower Band = SMA - (std_dev * STD)
+        lower_band = middle_band - (std_dev * std)
+
+        # Bandwidth % = ((Upper - Lower) / Middle) * 100
+        current_middle = middle_band.iloc[-1]
+        current_upper = upper_band.iloc[-1]
+        current_lower = lower_band.iloc[-1]
+        bandwidth = ((current_upper - current_lower) / current_middle) * 100 if current_middle > 0 else 0
+
+        return {
+            'upper_band': upper_band.tolist(),
+            'middle_band': middle_band.tolist(),
+            'lower_band': lower_band.tolist(),
+            'current_upper': round(current_upper, 2),
+            'current_middle': round(current_middle, 2),
+            'current_lower': round(current_lower, 2),
+            'bandwidth': round(bandwidth, 2),
+        }
+
+    except (IndexError, KeyError, ZeroDivisionError):
+        return None
+
+
 def _format_candlestick_data(history: pd.DataFrame) -> list:
     """
     Formatuje dane historyczne dla wykresu candlestick.
@@ -326,6 +480,104 @@ def _format_candlestick_data(history: pd.DataFrame) -> list:
         })
 
     return candlestick
+
+
+# ============================================
+# CACHE FUNCTIONS
+# ============================================
+
+def _get_from_cache(ticker: str) -> Optional[Tuple[dict, pd.DataFrame]]:
+    """
+    Sprawdza czy RAW Yahoo data są w cache i są świeże.
+
+    Returns RAW data (info dict, history DataFrame) zamiast przetworzonej analizy.
+    Analysis jest zawsze wykonywany na świeżo (szybki), ale Yahoo API call jest cache'owany.
+
+    Args:
+        ticker: Symbol giełdowy (uppercase)
+
+    Returns:
+        Tuple (info_dict, history_df) lub None jeśli brak/stare dane
+    """
+    try:
+        with DatabaseSession() as session:
+            # Znajdź najnowszy cache entry dla tego tickera
+            cache_entry = session.query(StockCache).filter(
+                StockCache.ticker == ticker,
+                StockCache.valid_until > datetime.now()
+            ).order_by(StockCache.timestamp.desc()).first()
+
+            if cache_entry:
+                # Deserializuj RAW data
+                info = json.loads(cache_entry.fundamentals_json) if cache_entry.fundamentals_json else {}
+                history_list = json.loads(cache_entry.history_json) if cache_entry.history_json else []
+
+                # Reconstruct history DataFrame
+                if history_list:
+                    history_df = pd.DataFrame(history_list)
+                    history_df['date'] = pd.to_datetime(history_df['date'])
+                    history_df = history_df.set_index('date')
+                else:
+                    history_df = pd.DataFrame()
+
+                print(f"[CACHE HIT] {ticker} - dane z cache (expires: {cache_entry.valid_until})")
+                return (info, history_df)
+
+            return None
+
+    except Exception as e:
+        print(f"[CACHE ERROR] Błąd odczytu cache dla {ticker}: {e}")
+        return None
+
+
+def _save_to_cache(ticker: str, info: dict, history: pd.DataFrame):
+    """
+    Zapisuje RAW Yahoo data do cache w DB.
+
+    Args:
+        ticker: Symbol giełdowy
+        info: Raw info dict z yfinance
+        history: Raw history DataFrame z yfinance
+
+    TTL: 15 minut
+
+    CACHE STRATEGY: Zapisujemy RAW data (info + history), a nie processed analysis.
+    Analysis jest szybki (~50ms), API call jest wolny (~2-3s). Cache'ujemy wolną część.
+    """
+    try:
+        with DatabaseSession() as session:
+            # Serialize history DataFrame to list of dicts
+            history_list = []
+            for date, row in history.iterrows():
+                history_list.append({
+                    'date': date.strftime('%Y-%m-%d %H:%M:%S'),
+                    'Open': float(row['Open']),
+                    'High': float(row['High']),
+                    'Low': float(row['Low']),
+                    'Close': float(row['Close']),
+                    'Volume': int(row['Volume'])
+                })
+
+            # Utwórz nowy cache entry
+            cache_entry = StockCache(
+                ticker=ticker,
+                current_price=info.get('currentPrice', info.get('regularMarketPrice')),
+                price_change_pct=info.get('regularMarketChangePercent'),
+                fundamentals_json=json.dumps(info),  # Save RAW info dict
+                technicals_json=None,  # Not used for RAW cache
+                history_json=json.dumps(history_list),  # Save RAW history
+                timestamp=datetime.now(),
+                valid_until=datetime.now() + timedelta(minutes=15)  # TTL: 15 minut
+            )
+
+            session.add(cache_entry)
+            session.commit()
+
+            print(f"[CACHE SAVE] {ticker} - zapisano RAW data do cache (TTL: 15 min, {len(history_list)} bars)")
+
+    except Exception as e:
+        print(f"[CACHE ERROR] Błąd zapisu cache dla {ticker}: {e}")
+        # Nie przerywamy działania aplikacji - cache failure nie jest krytyczny
 
 
 # ============================================
