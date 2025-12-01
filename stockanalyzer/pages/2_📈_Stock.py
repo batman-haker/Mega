@@ -102,19 +102,81 @@ with col_input3:
 
 if ticker_input and (analyze_button or 'stock_data' not in st.session_state or st.session_state.get('last_ticker') != ticker_input):
 
-    with st.spinner(f"📊 Pobieram dane dla {ticker_input}..."):
-        try:
-            # Fetch data
-            stock_data = get_stock_data(ticker_input, period=period_select)
+    # Validate ticker input
+    if not ticker_input.strip():
+        st.warning("⚠️ Proszę wpisać symbol tickera")
+        st.stop()
 
-            # Save to session state
-            st.session_state['stock_data'] = stock_data
-            st.session_state['last_ticker'] = ticker_input
+    if len(ticker_input) > 10:
+        st.warning("⚠️ Ticker zbyt długi. Przykłady: AAPL, MSFT, GOOGL, PKO.WA")
+        st.stop()
 
-        except Exception as e:
-            st.error(f"❌ Błąd: {str(e)}")
+    # Loading progress
+    progress_placeholder = st.empty()
+    status_placeholder = st.empty()
+
+    try:
+        # Stage 1: Fetch data
+        progress_placeholder.progress(0.3)
+        status_placeholder.info("🔍 Pobieranie danych z Yahoo Finance...")
+
+        stock_data = get_stock_data(ticker_input, period=period_select)
+
+        # Stage 2: Analysis complete
+        progress_placeholder.progress(1.0)
+        status_placeholder.success("✅ Dane załadowane pomyślnie!")
+
+        # Save to session state
+        st.session_state['stock_data'] = stock_data
+        st.session_state['last_ticker'] = ticker_input
+        st.session_state['load_error'] = None
+
+        # Clear loading indicators
+        import time
+        time.sleep(0.5)
+        progress_placeholder.empty()
+        status_placeholder.empty()
+
+    except ValueError as e:
+        # Invalid ticker or no data
+        progress_placeholder.empty()
+        status_placeholder.empty()
+        st.error(f"❌ Błąd: {str(e)}")
+        st.info("💡 **Sprawdź ticker:**\n- US stocks: AAPL, MSFT, GOOGL, TSLA\n- GPW: PKO.WA, CDR.WA, PKN.WA\n- Crypto: BTC-USD, ETH-USD")
+        st.session_state['load_error'] = str(e)
+        st.stop()
+
+    except ConnectionError as e:
+        # Network issue
+        progress_placeholder.empty()
+        status_placeholder.empty()
+        st.error("❌ Błąd połączenia z Yahoo Finance")
+        st.warning("⚠️ Sprawdź połączenie internetowe lub spróbuj ponownie za chwilę")
+        st.session_state['load_error'] = "connection_error"
+        st.stop()
+
+    except Exception as e:
+        # Unknown error
+        progress_placeholder.empty()
+        status_placeholder.empty()
+        error_msg = str(e)
+
+        # Friendly error messages
+        if "possibly delisted" in error_msg.lower():
+            st.error("❌ Ten ticker może być wycofany z giełdy lub zawieszone notowania")
+            st.info("💡 Sprawdź czy symbol jest aktualny")
+        elif "no data found" in error_msg.lower():
+            st.error("❌ Brak danych dla tego tickera")
             st.info("💡 Sprawdź czy ticker jest poprawny. Przykłady: AAPL, MSFT, GOOGL, PKO.WA")
-            st.stop()
+        elif "404" in error_msg:
+            st.error("❌ Ticker nie został znaleziony")
+            st.info("💡 Sprawdź czy symbol jest poprawny")
+        else:
+            st.error(f"❌ Nieoczekiwany błąd: {error_msg}")
+            st.info("💡 Spróbuj ponownie lub wybierz inny ticker")
+
+        st.session_state['load_error'] = error_msg
+        st.stop()
 
 # ============================================
 # DISPLAY RESULTS
