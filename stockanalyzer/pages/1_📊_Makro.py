@@ -2019,6 +2019,191 @@ with st.sidebar:
 
     st.markdown("---")
 
+
+# ============================================
+# COMPARISON TOOL - OVERLAY CHARTS
+# ============================================
+
+st.markdown("### 📊 Narzędzie Porównań - Overlay Charts")
+st.caption("💡 Porównaj różne wskaźniki makroekonomiczne na jednym wykresie")
+
+# Available indicators for comparison
+available_indicators = {
+    # Płynność i VIX
+    'vix': 'VIX (Volatility Index)',
+    'sofr_iorb_spread': 'SOFR-IORB Spread',
+    'repo_rate': 'Repo Rate',
+    'reverse_repo': 'Reverse Repo',
+
+    # Obligacje
+    'treasury_10y': '10Y Treasury Yield',
+    'treasury_2y': '2Y Treasury Yield',
+    'hy_spread': 'High Yield Spread',
+
+    # Inflacja
+    'cpi': 'CPI (Consumer Price Index)',
+    'cpi_core': 'Core CPI',
+    'pce': 'PCE (Personal Consumption)',
+    'pce_core': 'Core PCE',
+    'inflation_5y': '5Y Breakeven Inflation',
+
+    # Stopy procentowe
+    'fed_funds': 'Fed Funds Rate',
+
+    # Wzrost gospodarczy
+    'gdp_real': 'Real GDP Growth',
+    'ism_manufacturing': 'ISM Manufacturing',
+    'ism_services': 'ISM Services',
+
+    # Inne
+    'unemployment': 'Unemployment Rate',
+}
+
+# User selection
+col_comp1, col_comp2 = st.columns([2, 1])
+
+with col_comp1:
+    selected_indicators = st.multiselect(
+        "📈 Wybierz wskaźniki do porównania (2-4)",
+        options=list(available_indicators.keys()),
+        format_func=lambda x: available_indicators[x],
+        default=['vix', 'fed_funds', 'cpi'],
+        max_selections=4,
+        help="Wybierz 2-4 wskaźniki które chcesz porównać na jednym wykresie"
+    )
+
+with col_comp2:
+    normalize_mode = st.selectbox(
+        "⚖️ Tryb normalizacji",
+        options=['raw', 'z-score', 'percent'],
+        format_func=lambda x: {
+            'raw': 'Oryginalne wartości',
+            'z-score': 'Z-score (standaryzacja)',
+            'percent': '% zmiana od początku'
+        }[x],
+        help="Jak wyświetlać dane?\n- Raw: Oryginalne wartości\n- Z-score: Standaryzacja (średnia=0, std=1)\n- Percent: % zmiana od pierwszego dnia"
+    )
+
+if len(selected_indicators) < 2:
+    st.info("👆 Wybierz co najmniej 2 wskaźniki aby zobaczyć porównanie")
+elif len(selected_indicators) > 4:
+    st.warning("⚠️ Maksymalnie 4 wskaźniki na raz")
+else:
+    # Build comparison chart
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    fig = go.Figure()
+
+    # Track if we have any data
+    has_data = False
+
+    # Color palette
+    colors = ['#00f5ff', '#ff006e', '#39ff14', '#ffed4e', '#ff8c42']
+
+    for idx, indicator_key in enumerate(selected_indicators):
+        indicator_data = indicators.get(indicator_key, {})
+
+        if not indicator_data or not isinstance(indicator_data, dict):
+            continue
+
+        # Try to get time series
+        history = indicator_data.get('history', [])
+
+        if not history:
+            continue
+
+        # Convert to DataFrame
+        df = pd.DataFrame(history)
+
+        if df.empty or 'date' not in df.columns or 'value' not in df.columns:
+            continue
+
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date')
+
+        # Apply normalization
+        values = df['value'].values
+
+        if normalize_mode == 'z-score':
+            # Z-score normalization
+            mean_val = values.mean()
+            std_val = values.std()
+            if std_val > 0:
+                values = (values - mean_val) / std_val
+        elif normalize_mode == 'percent':
+            # Percent change from first value
+            first_val = values[0]
+            if first_val != 0:
+                values = ((values - first_val) / abs(first_val)) * 100
+
+        # Add trace
+        fig.add_trace(go.Scatter(
+            x=df['date'],
+            y=values,
+            name=available_indicators[indicator_key],
+            line=dict(color=colors[idx % len(colors)], width=2),
+            mode='lines',
+            hovertemplate='%{y:.2f}<extra></extra>'
+        ))
+
+        has_data = True
+
+    if has_data:
+        # Update layout
+        y_axis_title = {
+            'raw': 'Wartość',
+            'z-score': 'Z-score (standaryzacja)',
+            'percent': '% zmiana od początku'
+        }[normalize_mode]
+
+        fig.update_layout(
+            title=f"Porównanie wskaźników ({normalize_mode})",
+            xaxis_title="Data",
+            yaxis_title=y_axis_title,
+            hovermode='x unified',
+            template='plotly_dark',
+            height=500,
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            paper_bgcolor='rgba(10, 14, 39, 0.9)',
+            plot_bgcolor='rgba(26, 26, 46, 0.5)',
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Interpretation tips
+        with st.expander("💡 Jak interpretować porównanie?"):
+            st.markdown(f"""
+            **Tryb: {normalize_mode.upper()}**
+
+            {'**Oryginalne wartości** - Każdy wskaźnik ma swoją skalę' if normalize_mode == 'raw' else ''}
+            {'**Z-score** - Wszystkie wskaźniki są znormalizowane do średniej=0, odchylenie standardowe=1' if normalize_mode == 'z-score' else ''}
+            {'**% zmiana** - Pokazuje procentową zmianę względem pierwszego dnia w historii' if normalize_mode == 'percent' else ''}
+
+            🔍 **Co szukać:**
+            - **Korelacja dodatnia** - wskaźniki rosną i spadają razem
+            - **Korelacja ujemna** - jeden rośnie gdy drugi spada
+            - **Leading indicators** - jeden zmienia się przed drugim (np. VIX przed spadkiem akcji)
+            - **Divergence** - wskaźniki rozjeżdżają się (może zapowiadać zmianę trendu)
+
+            💡 **Przykłady:**
+            - **VIX vs Fed Funds** - Wysokie VIX → Fed obniża stopy (ratowanie rynku)
+            - **CPI vs Fed Funds** - Wysoka inflacja → Fed podnosi stopy
+            - **10Y vs 2Y Treasury** - Gdy 2Y > 10Y (inwersja) → recesja blisko
+            - **ISM vs GDP** - ISM jest leading indicator dla GDP
+            """)
+    else:
+        st.warning("⚠️ Brak danych historycznych dla wybranych wskaźników")
+
+    st.markdown("---")
+
     st.markdown("### 🔄 Cache Info")
     st.caption("Dane cache'owane na 1h")
     st.caption("FRED aktualizuje raz dziennie")
