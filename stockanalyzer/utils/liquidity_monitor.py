@@ -68,10 +68,12 @@ class LiquidityMonitor:
             'fed_funds_target': 'DFEDTARU', # Fed Funds Target Rate (Upper)
             'fed_funds_lower': 'DFEDTARL',  # Fed Funds Target Rate (Lower)
 
-            # TIER 5 - PMI/ISM (Wskaźniki Aktywności) (NOWE!)
-            'ism_manufacturing': 'NAPM',      # ISM Manufacturing Index
-            'ism_services': 'NMFBSNSA',       # ISM Services Index (non-seasonally adjusted)
-            'pmi_composite': 'USPMICMFRBHCQ', # PMI Composite (IHS Markit, quarterly)
+            # TIER 5 - PMI/ISM (Wskaźniki Aktywności) - USUNIĘTE!
+            # UWAGA: ISM/PMI dane zostały usunięte z FRED w 2016 (licensing issues)
+            # Alternatywa: Trzeba pobrać bezpośrednio z ISM.org lub Trading Economics
+            # 'ism_manufacturing': 'NAPM',      # DISCONTINUED 2016
+            # 'ism_services': 'NMFBSNSA',       # DISCONTINUED 2016
+            # 'pmi_composite': 'USPMICMFRBHCQ', # DISCONTINUED
         }
         
         # Progi dla alertów (według NY Fed Staff Report 1019)
@@ -127,11 +129,11 @@ class LiquidityMonitor:
             'gdp_weak': 1.0,           # GDP < 1% = słaby
             'gdp_recession': 0.0,      # GDP < 0% = recesja!
 
-            # TIER 5 - PMI/ISM (NOWE!)
-            'ism_expansion': 50.0,     # ISM > 50 = ekspansja
-            'ism_strong': 55.0,        # ISM > 55 = silny wzrost
-            'ism_contraction': 50.0,   # ISM < 50 = skurcz
-            'ism_weak': 45.0,          # ISM < 45 = słaby
+            # TIER 5 - PMI/ISM - USUNIĘTE (dane niedostępne w FRED od 2016)
+            # 'ism_expansion': 50.0,     # ISM > 50 = ekspansja
+            # 'ism_strong': 55.0,        # ISM > 55 = silny wzrost
+            # 'ism_contraction': 50.0,   # ISM < 50 = skurcz
+            # 'ism_weak': 45.0,          # ISM < 45 = słaby
         }
 
         # === SYSTEM WAG ===

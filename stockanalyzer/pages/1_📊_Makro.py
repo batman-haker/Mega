@@ -940,57 +940,65 @@ with tab_growth:
             """)
 
     with col_gdp2:
-        ism_mfg_val, ism_mfg_delta = get_indicator_val('ism_manufacturing')
-        st.metric(
-            "ISM Manufacturing",
-            f"{ism_mfg_val:.1f}" if ism_mfg_val else "N/A",
-            f"{ism_mfg_delta:+.1f}",
-            help="Indeks aktywności przemysłowej"
-        )
-        st.caption("🏭 **Przemysł**")
+        st.warning("⚠️ **ISM Manufacturing: DISCONTINUED**")
+        st.caption("🏭 Usunięte z FRED w 2016")
 
-        with st.expander("❓ Co to ISM?"):
+        with st.expander("❓ Dlaczego brak danych ISM?"):
             st.markdown("""
-            **ISM Manufacturing Index** = Indeks Menedżerów Zakupów (PMI) dla przemysłu
+            **ISM Manufacturing & Services** - **DISCONTINUED na FRED**
 
-            📊 **Jak to działa?**
-            - Ankieta wśród menedżerów zakupów w firmach produkcyjnych
-            - Pytania o: nowe zamówienia, produkcję, zatrudnienie, dostawy, zapasy
+            ⚠️ **Status:**
+            W czerwcu 2016 FRED usunął wszystkie 22 serie ISM ze względów licencyjnych.
 
-            🎯 **Magiczna liczba: 50**
-            - **> 50** = **EKSPANSJA** (przemysł rośnie!)
-            - **= 50** = Brak zmian
-            - **< 50** = **SKURCZ** (przemysł się kurczy)
-            - **> 55** = Bardzo silny wzrost
-            - **< 45** = Głęboki spadek
+            📊 **Co to było ISM/PMI?**
+            - **ISM Manufacturing** = Indeks Menedżerów Zakupów (PMI) dla przemysłu
+            - Ankieta: nowe zamówienia, produkcja, zatrudnienie, dostawy
+            - **Magiczna liczba: 50** (>50 = ekspansja, <50 = skurcz)
+            - **Leading indicator** - pokazuje trendy przed GDP!
 
-            💡 **Leading indicator** - pokazuje trendy przed oficjalnymi danymi GDP!
+            🔗 **Gdzie znaleźć dane?**
+            - [ISM.org](https://www.ismworld.org/) - oficjalne źródło (płatne)
+            - [Trading Economics](https://tradingeconomics.com/united-states/business-confidence) - free
+            - [S&P Global PMI](https://www.pmi.spglobal.com/) - alternatywne źródło PMI
+
+            💡 **Ostatni odczyt (październik 2025):**
+            - Manufacturing PMI: **48.7** (poniżej 50 = skurcz przemysłu)
+
+            📚 **Źródła:**
+            - [FRED Notice 2016](https://news.research.stlouisfed.org/2016/06/institute-for-supply-management-data-to-be-removed-from-fred/)
+            - [Trading Economics US PMI](https://tradingeconomics.com/united-states/business-confidence)
             """)
 
     with col_gdp3:
-        ism_svc_val, ism_svc_delta = get_indicator_val('ism_services')
-        st.metric(
-            "ISM Services",
-            f"{ism_svc_val:.1f}" if ism_svc_val else "N/A",
-            f"{ism_svc_delta:+.1f}",
-            help="Indeks aktywności w usługach"
-        )
-        st.caption("🏢 **Usługi (70% GDP!)**")
+        st.info("💡 **Dodaj ISM przez API**")
+        st.caption("🏢 Trading Economics lub ISM.org")
 
-        with st.expander("❓ Dlaczego Services > Manufacturing?"):
+        with st.expander("💻 Jak dodać ISM/PMI?"):
             st.markdown("""
-            **ISM Services** = PMI dla sektora usług
+            **Opcje integracji ISM/PMI:**
 
-            📊 **Dlaczego to ważniejsze?**
-            - Usługi to **~70% amerykańskiego GDP**!
-            - Manufacturing to tylko **~11%**
-            - Usługi: handel, finanse, tech, zdrowie, edukacja, transport
+            ### 1️⃣ Trading Economics API (Recommended)
+            ```python
+            # Free tier: 300 requests/month
+            import tradingeconomics as te
+            te.login('YOUR_API_KEY')
+            ism_data = te.getIndicatorData(country='United States',
+                                           indicator='Business Confidence')
+            ```
+            - [Zarejestruj się](https://tradingeconomics.com/analytics/api.aspx)
+            - Free tier dostępny!
 
-            🎯 **Interpretacja (podobnie jak Manufacturing):**
-            - **> 50** = Ekspansja
-            - **< 50** = Skurcz
+            ### 2️⃣ S&P Global PMI
+            - Alternatywne źródło PMI
+            - [S&P Global PMI Data](https://www.pmi.spglobal.com/)
 
-            💡 Jeśli Services spada, ale Manufacturing rośnie → nie wystarczy do uniknięcia recesji!
+            ### 3️⃣ ISM.org (Oficjalne)
+            - Paid subscription
+            - Najbardziej dokładne dane
+            - [ISM Membership](https://www.ismworld.org/)
+
+            💡 Po dodaniu API key, zakomentuj discontinued series w `liquidity_monitor.py`
+            i dodaj nowy collector!
             """)
 
 st.markdown("---")
@@ -2052,8 +2060,8 @@ available_indicators = {
 
     # Wzrost gospodarczy
     'gdp_real': 'Real GDP Growth',
-    'ism_manufacturing': 'ISM Manufacturing',
-    'ism_services': 'ISM Services',
+    # 'ism_manufacturing': 'ISM Manufacturing',  # DISCONTINUED - removed from FRED 2016
+    # 'ism_services': 'ISM Services',            # DISCONTINUED - removed from FRED 2016
 
     # Inne
     'unemployment': 'Unemployment Rate',
@@ -2110,7 +2118,8 @@ else:
         # Try to get time series
         history = indicator_data.get('history', [])
 
-        if not history:
+        # Check if history is valid (could be list or Series)
+        if history is None or (isinstance(history, list) and len(history) == 0):
             continue
 
         # Convert to DataFrame
