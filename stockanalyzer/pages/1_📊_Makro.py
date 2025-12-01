@@ -21,6 +21,7 @@ sys.path.insert(0, str(BASE_DIR))
 # Imports
 from components.cyberpunk_theme import load_cyberpunk_theme
 from collectors.fred_collector import FredCollector
+from collectors.fear_greed_collector import get_fear_greed_index, FearGreedCollector
 from components.charts import (
     create_gauge_meter,
     create_indicators_table,
@@ -83,6 +84,17 @@ def load_fred_data(days_back=730):
         return data, None
     except Exception as e:
         # Clean error message - usun unicode characters dla Windows console
+        error_msg = str(e).encode('ascii', 'replace').decode('ascii')
+        return None, error_msg
+
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour (Fear & Greed updates daily)
+def load_fear_greed():
+    """Pobiera CNN Fear & Greed Index"""
+    try:
+        data = get_fear_greed_index(use_cnn=True)
+        return data, None
+    except Exception as e:
         error_msg = str(e).encode('ascii', 'replace').decode('ascii')
         return None, error_msg
 
@@ -197,6 +209,126 @@ with st.expander("❓ Co to jest Market Regime?"):
 
     **Fun fact:** Regime może się zmienić w ciągu kilku dni! (COVID: RISK_ON → CRISIS w 2 tygodnie)
     """)
+
+
+# ============================================
+# FEAR & GREED INDEX (CNN)
+# ============================================
+
+st.markdown("---")
+st.markdown("### 😱 CNN Fear & Greed Index")
+st.caption("💡 Wskaźnik sentymentu inwestorów na rynku akcji (0-100)")
+
+# Load Fear & Greed data
+fg_data, fg_error = load_fear_greed()
+
+if fg_error:
+    st.warning(f"⚠️ Nie udało się pobrać Fear & Greed Index: {fg_error}")
+    st.info("💡 Sprawdzę ponownie za godzinę (cache TTL: 1h)")
+elif fg_data and fg_data.get('score') is not None:
+    collector = FearGreedCollector()
+    score = fg_data['score']
+    rating = fg_data['rating']
+
+    # Get interpretation
+    emoji, label, description = collector.interpret_score(score)
+
+    # Color coding based on score
+    if score <= 25:
+        color = "#ff073a"  # Red - Extreme Fear
+    elif score <= 45:
+        color = "#ff8c42"  # Orange - Fear
+    elif score <= 55:
+        color = "#ffed4e"  # Yellow - Neutral
+    elif score <= 75:
+        color = "#39ff14"  # Green - Greed
+    else:
+        color = "#00ff00"  # Bright Green - Extreme Greed
+
+    # Display in a styled box
+    col_fg1, col_fg2 = st.columns([1, 2])
+
+    with col_fg1:
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(10, 14, 39, 0.9));
+            border: 3px solid {color};
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 0 30px {color}80;
+        ">
+            <h1 style="color: {color}; font-family: 'Orbitron', sans-serif; font-size: 4rem; margin: 0;">
+                {emoji}
+            </h1>
+            <p style="color: {color}; font-family: 'Share Tech Mono', monospace; font-size: 2.5rem; margin: 0.5rem 0;">
+                {score:.1f}
+            </p>
+            <p style="color: #e0e0e0; font-size: 1.2rem; margin: 0.5rem 0 0 0;">
+                {label}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_fg2:
+        st.markdown(f"**Interpretacja:**")
+        st.markdown(f"{description}")
+
+        # Show previous values if available
+        if fg_data.get('previous_score'):
+            prev_score = fg_data['previous_score']
+            delta = score - prev_score
+            delta_emoji = "📈" if delta > 0 else "📉" if delta < 0 else "➡️"
+            st.metric(
+                "Zmiana (od poprzedniego)",
+                f"{score:.1f}",
+                f"{delta:+.1f}",
+                help="Zmiana od ostatniego pomiaru"
+            )
+
+        if fg_data.get('previous_1week'):
+            prev_1w = fg_data['previous_1week']
+            delta_1w = score - prev_1w
+            st.metric(
+                "Zmiana (tydzień)",
+                f"{score:.1f}",
+                f"{delta_1w:+.1f}",
+                help="Zmiana względem tygodnia temu"
+            )
+
+    # Educational expander
+    with st.expander("❓ Co to Fear & Greed Index?"):
+        st.markdown("""
+        **Fear & Greed Index** = Wskaźnik strachu i chciwości CNN
+
+        📊 **Jak to działa?**
+        CNN analizuje **7 różnych wskaźników** rynkowych:
+        1. **Market Momentum** (siła wzrostów)
+        2. **Stock Price Strength** (ile akcji bije 52-tygodniowe maksima)
+        3. **Stock Price Breadth** (volume akcji rosnących vs spadających)
+        4. **Put/Call Options** (ile ludzi kupuje opcje put vs call)
+        5. **Junk Bond Demand** (popyt na ryzykowne obligacje)
+        6. **Market Volatility** (VIX - indeks zmienności)
+        7. **Safe Haven Demand** (popyt na bezpieczne aktywa jak złoto)
+
+        🎯 **Interpretacja skali 0-100:**
+        - **0-25** = 😱 **EXTREME FEAR** - Możliwa okazja do kupna?
+        - **25-45** = 😰 **FEAR** - Inwestorzy ostrożni
+        - **45-55** = 😐 **NEUTRAL** - Rynek zrównoważony
+        - **55-75** = 😊 **GREED** - Optymizm rośnie
+        - **75-100** = 🤑 **EXTREME GREED** - Ryzyko korekty!
+
+        💡 **Jak to wykorzystać?**
+        - **Contrarian approach**: Kupuj gdy strach (< 30), sprzedawaj gdy chciwość (> 70)
+        - **Trend following**: Wysoki Fear może zapowiadać dalsze spadki (momentum)
+        - **Context matters**: Zawsze łącz z analizą fundamentalną i techniczną!
+
+        🔗 **Źródło:** CNN Business Fear & Greed Index
+        """)
+else:
+    st.info("📊 Fear & Greed Index: Brak danych")
+
+st.markdown("---")
 
 
 # ============================================
