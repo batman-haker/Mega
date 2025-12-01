@@ -147,10 +147,10 @@ load_cyberpunk_theme()
 
 ```env
 # FRED API (Makro data)
-FRED_API_KEY=fc1ef11c8f65429677a78db10a3a4d2e
+FRED_API_KEY=your_fred_api_key_here
 
 # Gemini AI (Google)
-GOOGLE_API_KEY=AIzaSyAMvCqrnIPxVXGI0Eok-GMAGw-lG-6Id6A
+GOOGLE_API_KEY=your_google_api_key_here
 
 # App settings
 DEFAULT_AI_MODEL=gemini-1.5-flash
@@ -165,6 +165,10 @@ TWITTER_CACHE_TTL=1800
 FRED_PROJECT_PATH=C:\FRED
 XSCRAP_CACHE_PATH=C:\Xscrap\x-financial-analyzer\data\cache
 ```
+
+**Get API Keys:**
+- FRED: https://fred.stlouisfed.org/docs/api/api_key.html (free)
+- Gemini: https://ai.google.dev/ (free tier available)
 
 ### Walidacja konfiguracji
 
