@@ -26,6 +26,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from collectors.stock_collector import get_stock_data
 from components.cyberpunk_theme import apply_chart_theme
 from utils.constants import CHART_COLORS, REGIME_COLORS
+from utils.education import (
+    get_indicator_help,
+    interpret_value,
+    SCORING_GLOSSARY,
+    FUNDAMENTALS_GLOSSARY,
+    TECHNICALS_GLOSSARY
+)
 
 # ============================================
 # PAGE CONFIG
@@ -64,6 +71,63 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+# ============================================
+# EDUCATIONAL SECTION
+# ============================================
+
+with st.expander("📚 PRZEWODNIK DLA POCZĄTKUJĄCYCH - Jak czytać wskaźniki?"):
+    st.markdown("""
+    ### 🎯 Jak działa Smart Analyzer?
+
+    Analizujemy akcje w **5 kategoriach** i łączymy w **Overall Score (0-100)**:
+
+    1. **Valuation (25%)** - Czy akcja jest tania czy droga?
+       - P/E Ratio, P/B Ratio, PEG - porównujemy do sektora
+       - **Wyższy score = tańsza akcja**
+
+    2. **Financial Health (20%)** - Jak zdrowa jest firma?
+       - ROE, marże, zadłużenie, płynność
+       - **Wyższy score = silniejsza firma**
+
+    3. **Growth (25%)** - Jak szybko rośnie?
+       - Wzrost przychodów i zysków
+       - **Wyższy score = szybszy wzrost**
+
+    4. **Momentum (15%)** - Jaki jest trend cenowy?
+       - RSI, MA, pozycja techniczna
+       - **Wyższy score = silniejszy trend wzrostowy**
+
+    5. **Sentiment (15%)** - Co myślą analitycy?
+       - Rekomendacje i target price
+       - **Wyższy score = bardziej pozytywne rekomendacje**
+
+    ---
+
+    ### 📊 Jak interpretować Overall Score?
+
+    - **75-100** 🌟 **EXCELLENT** - Strong buy candidate
+    - **60-75** 🟢 **GOOD** - Warta rozważenia
+    - **40-60** 🟡 **FAIR** - Neutralna, potrzeba więcej analizy
+    - **0-40** 🔴 **POOR** - Unikaj lub sprzedawaj
+
+    ---
+
+    ### 💡 Najważniejsze wskaźniki dla początkujących:
+
+    **Fundamentals:**
+    - **P/E Ratio** - Ile płacisz za $1 zysku? Niższe = tańsze
+    - **ROE** - Zwrot z kapitału. >15% = dobre, >20% = świetne
+    - **Debt/Equity** - Zadłużenie. <1 = bezpieczne, >2 = ryzykowne
+    - **Profit Margin** - Ile zostaje zysku? >10% = dobre
+
+    **Technicals:**
+    - **RSI** - <30 = oversold (kupuj?), >70 = overbought (sprzedaj?)
+    - **MACD** - Histogram > 0 = bullish, < 0 = bearish
+    - **MA 50/200** - Golden Cross (MA50 > MA200) = bardzo bullish!
+
+    💡 **Wskazówka:** Najedź na każdą metrykę, aby zobaczyć szczegółowe wyjaśnienie!
+    """)
 
 # ============================================
 # TICKER INPUT
@@ -263,6 +327,11 @@ if 'stock_data' in st.session_state:
 
         st.plotly_chart(fig_gauge, use_container_width=True)
 
+        # Interpretacja Overall Score
+        score = data['overall_score']
+        interpretation = interpret_value('overall_score', score, 'scoring')
+        st.markdown(f"<p style='text-align: center; color: #a0a0a0; font-size: 0.85rem;'>{interpretation}</p>", unsafe_allow_html=True)
+
     with mcol3:
         # Recommendation badge
         rec_color_map = {
@@ -341,6 +410,32 @@ if 'stock_data' in st.session_state:
         )
 
         st.plotly_chart(fig_breakdown, use_container_width=True)
+
+    # Category scores details with help
+    with st.expander("ℹ️ Co oznaczają poszczególne scores?"):
+        st.markdown(f"""
+        ### 📊 Szczegółowy Breakdown:
+
+        **1. Valuation Score: {data['valuation_score']:.0f}/100** {interpret_value('valuation_score', data['valuation_score'], 'scoring')}
+        - Czy akcja jest tania czy droga względem sektora?
+        - Wyższy score = tańsza akcja = lepszy value
+
+        **2. Financial Health Score: {data['financial_health_score']:.0f}/100** {interpret_value('financial_health_score', data['financial_health_score'], 'scoring')}
+        - Jak silne są fundamenty finansowe?
+        - Wyższy score = zdrowsza firma = mniejsze ryzyko
+
+        **3. Growth Score: {data['growth_score']:.0f}/100** {interpret_value('growth_score', data['growth_score'], 'scoring')}
+        - Jak szybko rośnie firma?
+        - Wyższy score = szybszy wzrost = większy potencjał
+
+        **4. Momentum Score: {data['momentum_score']:.0f}/100** {interpret_value('momentum_score', data['momentum_score'], 'scoring')}
+        - Jaki jest trend cenowy i siła momentum?
+        - Wyższy score = silniejszy trend wzrostowy
+
+        **5. Sentiment Score: {data['sentiment_score']:.0f}/100** {interpret_value('sentiment_score', data['sentiment_score'], 'scoring')}
+        - Co myślą analitycy? Jakie są rekomendacje?
+        - Wyższy score = bardziej pozytywne rekomendacje
+        """)
 
     # ============================================
     # SUMMARY
@@ -584,15 +679,20 @@ if 'stock_data' in st.session_state:
 
             st.plotly_chart(fig_macd, use_container_width=True)
 
-            # MACD metrics
+            # MACD metrics with interpretation
             col_macd1, col_macd2, col_macd3 = st.columns(3)
             with col_macd1:
-                st.metric("MACD", f"{macd_data['current_macd']:.4f}")
+                st.metric("MACD", f"{macd_data['current_macd']:.4f}",
+                          help="MACD Line = EMA(12) - EMA(26). Pokazuje momentum.")
             with col_macd2:
-                st.metric("Signal", f"{macd_data['current_signal']:.4f}")
+                st.metric("Signal", f"{macd_data['current_signal']:.4f}",
+                          help="Signal Line = EMA(9) of MACD. MACD > Signal = bullish")
             with col_macd3:
                 hist_val = macd_data['current_histogram']
-                st.metric("Histogram", f"{hist_val:.4f}", delta="Bullish" if hist_val > 0 else "Bearish")
+                hist_interp = "🟢 BULLISH - Trend wzrostowy" if hist_val > 0 else "🔴 BEARISH - Trend spadkowy"
+                st.metric("Histogram", f"{hist_val:.4f}", delta="Bullish" if hist_val > 0 else "Bearish",
+                          help="Histogram = MACD - Signal. >0 = bullish, <0 = bearish")
+                st.caption(hist_interp)
 
         else:
             st.info("Brak wystarczających danych do obliczenia MACD (wymagane: 26 dni)")
@@ -678,16 +778,23 @@ if 'stock_data' in st.session_state:
 
             st.plotly_chart(fig_bb, use_container_width=True)
 
-            # Bollinger Bands metrics
+            # Bollinger Bands metrics with interpretation
             col_bb1, col_bb2, col_bb3, col_bb4 = st.columns(4)
             with col_bb1:
-                st.metric("Upper Band", f"${bb_data['current_upper']:.2f}")
+                st.metric("Upper Band", f"${bb_data['current_upper']:.2f}",
+                          help="SMA + 2σ. Cena powyżej = potencjalne wykupienie")
             with col_bb2:
-                st.metric("SMA (20)", f"${bb_data['current_middle']:.2f}")
+                st.metric("SMA (20)", f"${bb_data['current_middle']:.2f}",
+                          help="20-dniowa średnia krocząca (środek pasma)")
             with col_bb3:
-                st.metric("Lower Band", f"${bb_data['current_lower']:.2f}")
+                st.metric("Lower Band", f"${bb_data['current_lower']:.2f}",
+                          help="SMA - 2σ. Cena poniżej = potencjalne wyprzedanie")
             with col_bb4:
-                st.metric("Bandwidth", f"{bb_data['bandwidth']:.2f}%")
+                bw = bb_data['bandwidth']
+                bw_interp = "🟡 SQUEEZE - Spodziewany wybuch zmienności" if bw < 5 else "🟢 NORMAL" if bw < 10 else "🔴 HIGH VOLATILITY"
+                st.metric("Bandwidth", f"{bw:.2f}%",
+                          help="Szerokość pasma (%). <5% = squeeze, >10% = wysoka zmienność")
+                st.caption(bw_interp)
 
         else:
             st.info("Brak wystarczających danych do obliczenia Bollinger Bands (wymagane: 20 dni)")
@@ -737,6 +844,31 @@ if 'stock_data' in st.session_state:
             if fund_data:
                 df_fund = pd.DataFrame(fund_data)
                 st.dataframe(df_fund, use_container_width=True, hide_index=True)
+
+                # Educational expander for fundamentals
+                with st.expander("📖 Co to znaczy? (Fundamentals)"):
+                    st.markdown("""
+                    **P/E Ratio** - Ile płacisz za $1 zysku?
+                    - < 15 = tanie, 15-25 = średnie, > 25 = drogie (zależy od sektora!)
+
+                    **PEG Ratio** - P/E z uwzględnieniem wzrostu
+                    - < 1 = niedowartościowana, > 2 = przewartościowana
+
+                    **P/B Ratio** - Cena do wartości księgowej
+                    - < 1 = poniżej wartości aktywów, > 3 = droga
+
+                    **ROE** - Zwrot z kapitału (%)
+                    - > 15% = dobre, > 20% = świetne!
+
+                    **Debt/Equity** - Stosunek długu do kapitału
+                    - < 0.5 = niskie zadłużenie, > 1.5 = wysokie ryzyko
+
+                    **Profit Margin** - Marża zysku netto (%)
+                    - > 10% = dobre, > 20% = świetne!
+
+                    **Revenue/Earnings Growth** - Wzrost przychodów/zysków (%)
+                    - > 15% = strong growth, > 30% = hypergrowth
+                    """)
             else:
                 st.info("Brak danych fundamentalnych")
 
@@ -780,6 +912,35 @@ if 'stock_data' in st.session_state:
             if tech_data:
                 df_tech = pd.DataFrame(tech_data)
                 st.dataframe(df_tech, use_container_width=True, hide_index=True)
+
+                # Educational expander for technicals
+                with st.expander("📖 Co to znaczy? (Technicals)"):
+                    st.markdown("""
+                    **MA(20/50/200)** - Moving Averages (średnie kroczące)
+                    - Cena > MA = trend wzrostowy, Cena < MA = trend spadkowy
+                    - MA50 > MA200 = Golden Cross (bardzo bullish!) 🟢
+                    - MA50 < MA200 = Death Cross (bardzo bearish!) 🔴
+
+                    **RSI(14)** - Relative Strength Index
+                    - < 30 = OVERSOLD (wyprzedane - sygnał kupna?) 🟢
+                    - 30-70 = NEUTRAL (normalna strefa) 🟡
+                    - > 70 = OVERBOUGHT (wykupione - sygnał sprzedaży?) 🔴
+
+                    **MACD** - Moving Average Convergence Divergence
+                    - Histogram > 0 = bullish (trend wzrostowy) 🟢
+                    - Histogram < 0 = bearish (trend spadkowy) 🔴
+                    - Przecięcie linii MACD z Signal = sygnał kupna/sprzedaży
+
+                    **Bollinger Bands** - Wstęgi zmienności
+                    - Cena przy górnej wstędze = potencjalne wykupienie
+                    - Cena przy dolnej wstędze = potencjalne wyprzedanie
+                    - Wąskie pasmo = niska zmienność, spodziewany wybuch
+
+                    **Beta** - Zmienność względem rynku
+                    - < 1 = mniej zmienne niż rynek (mniejsze ryzyko)
+                    - = 1 = tak samo zmienne jak rynek
+                    - > 1 = bardziej zmienne niż rynek (większe ryzyko i potencjał)
+                    """)
             else:
                 st.info("Brak danych technicznych")
 
