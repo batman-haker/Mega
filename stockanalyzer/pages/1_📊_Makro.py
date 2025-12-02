@@ -2115,15 +2115,15 @@ else:
         if not indicator_data or not isinstance(indicator_data, dict):
             continue
 
-        # Try to get time series
-        history = indicator_data.get('history', [])
+        # Get time series data (use 'data' key which contains DataFrame with date+value)
+        history = indicator_data.get('data', pd.DataFrame())
 
-        # Check if history is valid (could be list or Series)
-        if history is None or (isinstance(history, list) and len(history) == 0):
+        # Check if history is valid
+        if history is None or (isinstance(history, pd.DataFrame) and history.empty):
             continue
 
-        # Convert to DataFrame
-        df = pd.DataFrame(history)
+        # Data is already DataFrame from liquidity_monitor
+        df = history if isinstance(history, pd.DataFrame) else pd.DataFrame(history)
 
         if df.empty or 'date' not in df.columns or 'value' not in df.columns:
             continue
