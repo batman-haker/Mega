@@ -2275,9 +2275,10 @@ if total_liquidity and selected_asset:
         if asset_hist.empty:
             st.error(f"❌ Nie udało się pobrać danych dla {selected_asset}")
         else:
-            # Get liquidity historical data
-            reserves_history = indicators.get('reserves_alt', {}).get('history', [])
-            rrp_history = indicators.get('reverse_repo', {}).get('history', [])
+            # Get liquidity historical data (use 'data' key, not 'history')
+            # 'history' is just a Series of values, 'data' is DataFrame with date+value columns
+            reserves_history = indicators.get('reserves_alt', {}).get('data', pd.DataFrame())
+            rrp_history = indicators.get('reverse_repo', {}).get('data', pd.DataFrame())
 
             # Check if history data is valid (could be list or Series)
             def is_empty_history(hist):
@@ -2292,173 +2293,179 @@ if total_liquidity and selected_asset:
             if is_empty_history(reserves_history) or is_empty_history(rrp_history):
                 st.warning("⚠️ Brak danych historycznych płynności")
             else:
-                # Convert to DataFrames
-                df_reserves = pd.DataFrame(reserves_history)
-                df_rrp = pd.DataFrame(rrp_history)
+                # Data is already DataFrame from liquidity_monitor
+                df_reserves = reserves_history
+                df_rrp = rrp_history
 
-                df_reserves['date'] = pd.to_datetime(df_reserves['date'])
-                df_rrp['date'] = pd.to_datetime(df_rrp['date'])
-
-                # Merge reserves + RRP to get total liquidity
-                df_liquidity = pd.merge(df_reserves, df_rrp, on='date', suffixes=('_reserves', '_rrp'))
-                df_liquidity['total_liquidity'] = df_liquidity['value_reserves'] + df_liquidity['value_rrp']
-                df_liquidity = df_liquidity[['date', 'total_liquidity']]
-
-                # Prepare asset data
-                df_asset = asset_hist.reset_index()
-                df_asset['date'] = pd.to_datetime(df_asset['Date']).dt.tz_localize(None)
-                df_asset = df_asset[['date', 'Close']].rename(columns={'Close': 'price'})
-
-                # Filter by lookback period
-                cutoff_date = datetime.now() - timedelta(days=lookback_days)
-                df_liquidity = df_liquidity[df_liquidity['date'] >= cutoff_date]
-                df_asset = df_asset[df_asset['date'] >= cutoff_date]
-
-                # Merge on date (use asof merge for different frequencies)
-                df_merged = pd.merge_asof(
-                    df_asset.sort_values('date'),
-                    df_liquidity.sort_values('date'),
-                    on='date',
-                    direction='backward'
-                ).dropna()
-
-                if len(df_merged) < 10:
-                    st.warning("⚠️ Za mało punktów danych do analizy")
+                # Check if DataFrames have required columns
+                if df_reserves.empty or 'date' not in df_reserves.columns or 'value' not in df_reserves.columns:
+                    st.warning(f"⚠️ Nieprawidłowa struktura danych dla Reserves. Dostępne kolumny: {list(df_reserves.columns)}")
+                elif df_rrp.empty or 'date' not in df_rrp.columns or 'value' not in df_rrp.columns:
+                    st.warning(f"⚠️ Nieprawidłowa struktura danych dla RRP. Dostępne kolumny: {list(df_rrp.columns)}")
                 else:
-                    # Calculate correlation
-                    correlation = df_merged['price'].corr(df_merged['total_liquidity'])
+                    df_reserves['date'] = pd.to_datetime(df_reserves['date'])
+                    df_rrp['date'] = pd.to_datetime(df_rrp['date'])
 
-                    # Calculate R-squared (linear regression)
-                    slope, intercept, r_value, p_value, std_err = stats.linregress(
-                        df_merged['total_liquidity'],
-                        df_merged['price']
-                    )
-                    r_squared = r_value ** 2
-
-                    # Display metrics
-                    col_m1, col_m2, col_m3 = st.columns(3)
-
-                    with col_m1:
-                        corr_color = "🟢" if correlation > 0.5 else "🟡" if correlation > 0 else "🔴"
-                        st.metric(
-                            "Correlation",
-                            f"{corr_color} {correlation:.3f}",
-                            help="Siła korelacji: >0.7 = silna, 0.3-0.7 = średnia, <0.3 = słaba"
+                    # Merge reserves + RRP to get total liquidity
+                    df_liquidity = pd.merge(df_reserves, df_rrp, on='date', suffixes=('_reserves', '_rrp'))
+                    df_liquidity['total_liquidity'] = df_liquidity['value_reserves'] + df_liquidity['value_rrp']
+                    df_liquidity = df_liquidity[['date', 'total_liquidity']]
+    
+                    # Prepare asset data
+                    df_asset = asset_hist.reset_index()
+                    df_asset['date'] = pd.to_datetime(df_asset['Date']).dt.tz_localize(None)
+                    df_asset = df_asset[['date', 'Close']].rename(columns={'Close': 'price'})
+    
+                    # Filter by lookback period
+                    cutoff_date = datetime.now() - timedelta(days=lookback_days)
+                    df_liquidity = df_liquidity[df_liquidity['date'] >= cutoff_date]
+                    df_asset = df_asset[df_asset['date'] >= cutoff_date]
+    
+                    # Merge on date (use asof merge for different frequencies)
+                    df_merged = pd.merge_asof(
+                        df_asset.sort_values('date'),
+                        df_liquidity.sort_values('date'),
+                        on='date',
+                        direction='backward'
+                    ).dropna()
+    
+                    if len(df_merged) < 10:
+                        st.warning("⚠️ Za mało punktów danych do analizy")
+                    else:
+                        # Calculate correlation
+                        correlation = df_merged['price'].corr(df_merged['total_liquidity'])
+    
+                        # Calculate R-squared (linear regression)
+                        slope, intercept, r_value, p_value, std_err = stats.linregress(
+                            df_merged['total_liquidity'],
+                            df_merged['price']
                         )
-
-                    with col_m2:
-                        st.metric(
-                            "R² (R-squared)",
-                            f"{r_squared:.3f}",
-                            help="Jak dobrze płynność wyjaśnia cenę (0-1, wyżej = lepiej)"
+                        r_squared = r_value ** 2
+    
+                        # Display metrics
+                        col_m1, col_m2, col_m3 = st.columns(3)
+    
+                        with col_m1:
+                            corr_color = "🟢" if correlation > 0.5 else "🟡" if correlation > 0 else "🔴"
+                            st.metric(
+                                "Correlation",
+                                f"{corr_color} {correlation:.3f}",
+                                help="Siła korelacji: >0.7 = silna, 0.3-0.7 = średnia, <0.3 = słaba"
+                            )
+    
+                        with col_m2:
+                            st.metric(
+                                "R² (R-squared)",
+                                f"{r_squared:.3f}",
+                                help="Jak dobrze płynność wyjaśnia cenę (0-1, wyżej = lepiej)"
+                            )
+    
+                        with col_m3:
+                            significance = "✅ Istotna" if p_value < 0.05 else "⚠️ Nieistotna"
+                            st.metric(
+                                "P-value",
+                                f"{p_value:.4f}",
+                                delta=significance,
+                                help="P < 0.05 = statystycznie istotna korelacja"
+                            )
+    
+                        # Create dual-axis chart
+                        from plotly.subplots import make_subplots
+                        import plotly.graph_objects as go
+    
+                        fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+                        # Add asset price (left y-axis)
+                        fig.add_trace(
+                            go.Scatter(
+                                x=df_merged['date'],
+                                y=df_merged['price'],
+                                name=available_assets[selected_asset],
+                                line=dict(color='#00f5ff', width=2),
+                                mode='lines'
+                            ),
+                            secondary_y=False
                         )
-
-                    with col_m3:
-                        significance = "✅ Istotna" if p_value < 0.05 else "⚠️ Nieistotna"
-                        st.metric(
-                            "P-value",
-                            f"{p_value:.4f}",
-                            delta=significance,
-                            help="P < 0.05 = statystycznie istotna korelacja"
+    
+                        # Add total liquidity (right y-axis)
+                        fig.add_trace(
+                            go.Scatter(
+                                x=df_merged['date'],
+                                y=df_merged['total_liquidity'],
+                                name='Total Liquidity',
+                                line=dict(color='#ff006e', width=2, dash='dot'),
+                                mode='lines'
+                            ),
+                            secondary_y=True
                         )
-
-                    # Create dual-axis chart
-                    from plotly.subplots import make_subplots
-                    import plotly.graph_objects as go
-
-                    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-                    # Add asset price (left y-axis)
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df_merged['date'],
-                            y=df_merged['price'],
-                            name=available_assets[selected_asset],
-                            line=dict(color='#00f5ff', width=2),
-                            mode='lines'
-                        ),
-                        secondary_y=False
-                    )
-
-                    # Add total liquidity (right y-axis)
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df_merged['date'],
-                            y=df_merged['total_liquidity'],
-                            name='Total Liquidity',
-                            line=dict(color='#ff006e', width=2, dash='dot'),
-                            mode='lines'
-                        ),
-                        secondary_y=True
-                    )
-
-                    # Update layout
-                    fig.update_layout(
-                        title=f"{available_assets[selected_asset]} vs Total Liquidity",
-                        xaxis_title="Data",
-                        hovermode='x unified',
-                        template='plotly_dark',
-                        height=500,
-                        paper_bgcolor='rgba(10, 14, 39, 0.9)',
-                        plot_bgcolor='rgba(26, 26, 46, 0.5)',
-                        legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.02,
-                            xanchor="right",
-                            x=1
+    
+                        # Update layout
+                        fig.update_layout(
+                            title=f"{available_assets[selected_asset]} vs Total Liquidity",
+                            xaxis_title="Data",
+                            hovermode='x unified',
+                            template='plotly_dark',
+                            height=500,
+                            paper_bgcolor='rgba(10, 14, 39, 0.9)',
+                            plot_bgcolor='rgba(26, 26, 46, 0.5)',
+                            legend=dict(
+                                orientation="h",
+                                yanchor="bottom",
+                                y=1.02,
+                                xanchor="right",
+                                x=1
+                            )
                         )
-                    )
-
-                    # Set y-axes titles
-                    fig.update_yaxes(title_text=f"{available_assets[selected_asset]} Price", secondary_y=False)
-                    fig.update_yaxes(title_text="Total Liquidity ($B)", secondary_y=True)
-
-                    st.plotly_chart(fig, use_container_width=True)
-
-                    # Interpretation
-                    with st.expander("📖 Jak interpretować wyniki?"):
-                        st.markdown(f"""
-                        **Twoja analiza: {available_assets[selected_asset]} vs Total Liquidity**
-
-                        📊 **Wyniki:**
-                        - **Correlation**: {correlation:.3f} ({corr_color})
-                        - **R²**: {r_squared:.3f} (płynność wyjaśnia {r_squared*100:.1f}% zmienności ceny)
-                        - **P-value**: {p_value:.4f} ({significance})
-
-                        💡 **Co to znaczy?**
-
-                        **Correlation (Korelacja):**
-                        - **> 0.7**: Silna dodatnia (płynność ↑ → cena ↑)
-                        - **0.3-0.7**: Średnia korelacja
-                        - **< 0.3**: Słaba korelacja
-                        - **Ujemna**: Odwrotna zależność (płynność ↑ → cena ↓)
-
-                        **R² (R-squared):**
-                        - Pokazuje jak dobrze płynność "przewiduje" cenę
-                        - **R² = 0.80** = 80% zmian ceny wyjaśnione płynnością
-                        - **R² = 0.20** = tylko 20% wyjaśnione, inne czynniki ważniejsze
-
-                        **P-value:**
-                        - **< 0.05**: Korelacja jest statystycznie istotna ✅
-                        - **> 0.05**: Może być przypadkowa ⚠️
-
-                        🎯 **Praktyczne zastosowanie:**
-
-                        {'**Silna korelacja!** Gdy Fed zwiększa płynność (QE, obniżki RRP), cena rośnie. Gdy zmniejsza (QT), cena spada.' if correlation > 0.6 else ''}
-                        {'**Średnia korelacja.** Płynność ma wpływ, ale inne czynniki też ważne (sentiment, fundamenty).' if 0.3 <= correlation <= 0.6 else ''}
-                        {'**Słaba korelacja.** To aktywo reaguje bardziej na inne czynniki niż na płynność Fed.' if correlation < 0.3 else ''}
-
-                        💡 **Dan Kostecki Framework:**
-                        - Bitcoin ma zazwyczaj **wysoką korelację** z płynnością (0.7-0.9)
-                        - Złoto: średnia korelacja (0.4-0.6)
-                        - Tech stocks (AAPL, TSLA): silna w QE, słabsza w QT
-
-                        📈 **Trading signal:**
-                        {'Jeśli płynność rośnie → rozważ pozycję LONG' if correlation > 0.5 else ''}
-                        {'Jeśli płynność spada → rozważ pozycję SHORT lub redukcję ekspozycji' if correlation > 0.5 else ''}
-                        """)
-
+    
+                        # Set y-axes titles
+                        fig.update_yaxes(title_text=f"{available_assets[selected_asset]} Price", secondary_y=False)
+                        fig.update_yaxes(title_text="Total Liquidity ($B)", secondary_y=True)
+    
+                        st.plotly_chart(fig, use_container_width=True)
+    
+                        # Interpretation
+                        with st.expander("📖 Jak interpretować wyniki?"):
+                            st.markdown(f"""
+                            **Twoja analiza: {available_assets[selected_asset]} vs Total Liquidity**
+    
+                            📊 **Wyniki:**
+                            - **Correlation**: {correlation:.3f} ({corr_color})
+                            - **R²**: {r_squared:.3f} (płynność wyjaśnia {r_squared*100:.1f}% zmienności ceny)
+                            - **P-value**: {p_value:.4f} ({significance})
+    
+                            💡 **Co to znaczy?**
+    
+                            **Correlation (Korelacja):**
+                            - **> 0.7**: Silna dodatnia (płynność ↑ → cena ↑)
+                            - **0.3-0.7**: Średnia korelacja
+                            - **< 0.3**: Słaba korelacja
+                            - **Ujemna**: Odwrotna zależność (płynność ↑ → cena ↓)
+    
+                            **R² (R-squared):**
+                            - Pokazuje jak dobrze płynność "przewiduje" cenę
+                            - **R² = 0.80** = 80% zmian ceny wyjaśnione płynnością
+                            - **R² = 0.20** = tylko 20% wyjaśnione, inne czynniki ważniejsze
+    
+                            **P-value:**
+                            - **< 0.05**: Korelacja jest statystycznie istotna ✅
+                            - **> 0.05**: Może być przypadkowa ⚠️
+    
+                            🎯 **Praktyczne zastosowanie:**
+    
+                            {'**Silna korelacja!** Gdy Fed zwiększa płynność (QE, obniżki RRP), cena rośnie. Gdy zmniejsza (QT), cena spada.' if correlation > 0.6 else ''}
+                            {'**Średnia korelacja.** Płynność ma wpływ, ale inne czynniki też ważne (sentiment, fundamenty).' if 0.3 <= correlation <= 0.6 else ''}
+                            {'**Słaba korelacja.** To aktywo reaguje bardziej na inne czynniki niż na płynność Fed.' if correlation < 0.3 else ''}
+    
+                            💡 **Dan Kostecki Framework:**
+                            - Bitcoin ma zazwyczaj **wysoką korelację** z płynnością (0.7-0.9)
+                            - Złoto: średnia korelacja (0.4-0.6)
+                            - Tech stocks (AAPL, TSLA): silna w QE, słabsza w QT
+    
+                            📈 **Trading signal:**
+                            {'Jeśli płynność rośnie → rozważ pozycję LONG' if correlation > 0.5 else ''}
+                            {'Jeśli płynność spada → rozważ pozycję SHORT lub redukcję ekspozycji' if correlation > 0.5 else ''}
+                            """)
+    
     except ImportError:
         st.error("❌ Brak biblioteki scipy. Zainstaluj: `pip install scipy`")
     except Exception as e:
