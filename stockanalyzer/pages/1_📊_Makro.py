@@ -12,7 +12,7 @@ import streamlit as st
 import sys
 from pathlib import Path
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Add parent directory to path
 BASE_DIR = Path(__file__).resolve().parent.parent
