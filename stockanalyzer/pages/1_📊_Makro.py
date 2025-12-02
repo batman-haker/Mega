@@ -2279,7 +2279,17 @@ if total_liquidity and selected_asset:
             reserves_history = indicators.get('reserves_alt', {}).get('history', [])
             rrp_history = indicators.get('reverse_repo', {}).get('history', [])
 
-            if not reserves_history or not rrp_history:
+            # Check if history data is valid (could be list or Series)
+            def is_empty_history(hist):
+                if hist is None:
+                    return True
+                if isinstance(hist, list):
+                    return len(hist) == 0
+                if isinstance(hist, pd.Series) or isinstance(hist, pd.DataFrame):
+                    return hist.empty
+                return False
+
+            if is_empty_history(reserves_history) or is_empty_history(rrp_history):
                 st.warning("⚠️ Brak danych historycznych płynności")
             else:
                 # Convert to DataFrames
