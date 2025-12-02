@@ -2235,9 +2235,14 @@ else:
 # Asset selection
 available_assets = {
     'BTC-USD': 'Bitcoin',
+    'ETH-USD': 'Ethereum',
     'GC=F': 'Gold Futures',
     'SI=F': 'Silver Futures',
     'AAPL': 'Apple Inc.',
+    'GOOGL': 'Alphabet (Google)',
+    'NVDA': 'NVIDIA Corporation',
+    'AMD': 'Advanced Micro Devices',
+    'AMZN': 'Amazon.com Inc.',
     'TSLA': 'Tesla Inc.',
 }
 
