@@ -2468,13 +2468,13 @@ if total_liquidity and selected_asset:
 
 st.markdown("---")
 
-    st.markdown("### 🔄 Cache Info")
-    st.caption("Dane cache'owane na 1h")
-    st.caption("FRED aktualizuje raz dziennie")
+st.markdown("### 🔄 Cache Info")
+st.caption("Dane cache'owane na 1h")
+st.caption("FRED aktualizuje raz dziennie")
 
-    if st.button("🔄 Odśwież wszystko"):
-        st.cache_data.clear()
-        st.rerun()
+if st.button("🔄 Odśwież wszystko"):
+    st.cache_data.clear()
+    st.rerun()
 
 
 # ============================================
