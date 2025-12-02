@@ -11,6 +11,7 @@ plotly>=5.18.0
 # Data Processing
 pandas>=2.0.0
 numpy>=1.24.0
+scipy>=1.11.0
 
 # Financial Data APIs
 yfinance>=0.2.28
