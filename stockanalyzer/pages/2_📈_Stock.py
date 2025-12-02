@@ -135,54 +135,15 @@ with st.expander("📚 PRZEWODNIK DLA POCZĄTKUJĄCYCH - Jak czytać wskaźniki?
 
 st.markdown("### 🔍 Wyszukaj Akcję")
 
-# Popular tickers database
-POPULAR_TICKERS = {
-    "🇺🇸 Tech Giants": ["AAPL - Apple", "MSFT - Microsoft", "GOOGL - Alphabet (Google)",
-                         "AMZN - Amazon", "META - Meta (Facebook)", "NVDA - NVIDIA",
-                         "TSLA - Tesla", "AMD - AMD"],
-    "🇺🇸 Finance": ["JPM - JP Morgan", "BAC - Bank of America", "V - Visa",
-                     "MA - Mastercard", "GS - Goldman Sachs"],
-    "🇺🇸 Healthcare": ["JNJ - Johnson & Johnson", "UNH - UnitedHealth", "PFE - Pfizer",
-                        "ABBV - AbbVie", "TMO - Thermo Fisher"],
-    "🇺🇸 Consumer": ["WMT - Walmart", "PG - Procter & Gamble", "KO - Coca-Cola",
-                      "PEP - PepsiCo", "NKE - Nike", "MCD - McDonald's"],
-    "🇺🇸 Energy": ["XOM - Exxon Mobil", "CVX - Chevron", "COP - ConocoPhillips"],
-    "🇵🇱 GPW (Warsaw)": ["PKO.WA - PKO BP", "CDR.WA - CD Projekt", "PKN.WA - PKN Orlen",
-                          "PZU.WA - PZU", "ALE.WA - Allegro"],
-    "💰 Crypto": ["BTC-USD - Bitcoin", "ETH-USD - Ethereum"],
-    "🔧 Własny ticker": ["CUSTOM"]
-}
-
 col_input1, col_input2, col_input3 = st.columns([3, 2, 1])
 
 with col_input1:
-    # Create flat list for selectbox
-    ticker_options = []
-    for category, tickers in POPULAR_TICKERS.items():
-        ticker_options.append(f"--- {category} ---")
-        ticker_options.extend(tickers)
-
-    selected_option = st.selectbox(
-        "Wybierz ticker z listy lub wpisz własny",
-        options=ticker_options,
-        index=ticker_options.index("AAPL - Apple"),
-        help="🔍 Zacznij wpisywać aby szybko znaleźć ticker"
-    )
-
-    # Parse selected option
-    if selected_option.startswith("---"):
-        ticker_input = "AAPL"  # Default if header selected
-    elif selected_option == "CUSTOM":
-        # Show text input for custom ticker
-        ticker_input = st.text_input(
-            "Wpisz własny ticker:",
-            value="",
-            placeholder="np. TSLA, NVDA, PKO.WA",
-            help="Wpisz dowolny symbol z Yahoo Finance"
-        ).upper()
-    else:
-        # Extract ticker from "TICKER - Name" format
-        ticker_input = selected_option.split(" - ")[0].strip().upper()
+    ticker_input = st.text_input(
+        "Ticker Symbol",
+        value="AAPL",
+        placeholder="np. AAPL, MSFT, GOOGL, PKO.WA",
+        help="Wpisz symbol giełdowy (US: AAPL, MSFT | GPW: PKO.WA, CDR.WA)"
+    ).upper()
 
 with col_input2:
     period_select = st.selectbox(
@@ -198,6 +159,34 @@ with col_input3:
         use_container_width=True,
         type="primary"
     )
+
+# Ticker suggestions expander
+with st.expander("📋 Popularne Tickery - Kliknij aby skopiować", expanded=False):
+    st.markdown("""
+    **🇺🇸 Tech Giants:**
+    `AAPL` Apple | `MSFT` Microsoft | `GOOGL` Alphabet | `AMZN` Amazon | `META` Meta | `NVDA` NVIDIA | `AMD` AMD | `TSLA` Tesla | `NFLX` Netflix | `INTC` Intel
+
+    **💰 Finance:**
+    `JPM` JPMorgan | `BAC` Bank of America | `WFC` Wells Fargo | `GS` Goldman Sachs | `MS` Morgan Stanley | `C` Citigroup | `V` Visa | `MA` Mastercard | `AXP` American Express
+
+    **🏥 Healthcare:**
+    `JNJ` Johnson & Johnson | `UNH` UnitedHealth | `PFE` Pfizer | `ABBV` AbbVie | `TMO` Thermo Fisher | `MRK` Merck | `LLY` Eli Lilly | `ABT` Abbott
+
+    **🛒 Consumer:**
+    `KO` Coca-Cola | `PEP` PepsiCo | `WMT` Walmart | `HD` Home Depot | `MCD` McDonald's | `NKE` Nike | `SBUX` Starbucks | `DIS` Disney | `COST` Costco
+
+    **⚡ Energy:**
+    `XOM` Exxon Mobil | `CVX` Chevron | `COP` ConocoPhillips | `SLB` Schlumberger | `EOG` EOG Resources | `MPC` Marathon Petroleum
+
+    **🇵🇱 GPW Warszawa:**
+    `PKO.WA` PKO BP | `CDR.WA` CD Projekt | `PKN.WA` PKN Orlen | `PZU.WA` PZU | `ALE.WA` Allegro | `PEO.WA` Pekao | `KGH.WA` KGHM | `JSW.WA` JSW | `LPP.WA` LPP
+
+    **₿ Crypto:**
+    `BTC-USD` Bitcoin | `ETH-USD` Ethereum | `BNB-USD` Binance Coin | `ADA-USD` Cardano | `SOL-USD` Solana | `XRP-USD` Ripple | `DOGE-USD` Dogecoin
+
+    **💎 Commodities:**
+    `GC=F` Gold | `SI=F` Silver | `CL=F` Crude Oil | `NG=F` Natural Gas | `HG=F` Copper
+    """)
 
 # ============================================
 # ANALYSIS EXECUTION
