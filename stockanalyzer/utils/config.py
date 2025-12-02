@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 
 # Ładowanie .env z katalogu stockanalyzer
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 class Config:
