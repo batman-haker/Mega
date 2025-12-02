@@ -344,7 +344,7 @@ def get_expert_opinion(
     ticker: str,
     market_data: Dict,
     macro_data: Dict,
-    model_name: str = 'gemini-1.5-flash'
+    model_name: str = 'gemini-2.5-flash'
 ) -> Dict:
     """
     Generuje opinię eksperta o spółce używając Gemini AI
