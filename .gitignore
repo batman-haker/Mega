@@ -22,6 +22,7 @@ logs/
 *.json
 !.env.example
 !.claude/settings.example.json
+!stockanalyzer/data/profiles/*.json
 
 # IDE
 .vscode/
