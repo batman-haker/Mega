@@ -39,3 +39,8 @@ nul
 
 # Streamlit
 .streamlit/secrets.toml
+stockanalyzer/.streamlit/secrets.toml
+
+# Analysis History Database
+stockanalyzer/data/analysis_history.db
+stockanalyzer/data/analysis_history.db-journal
