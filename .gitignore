@@ -16,7 +16,8 @@ __pycache__/
 .Python
 
 # Data & Logs
-data/
+data/*
+!data/profiles/
 logs/
 *.log
 *.json
