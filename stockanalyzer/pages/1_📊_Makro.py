@@ -20,6 +20,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 # Imports
 from components.cyberpunk_theme import load_cyberpunk_theme
+from utils.mobile_styles import inject_mobile_css
 from collectors.fred_collector import FredCollector
 from collectors.fear_greed_collector import get_fear_greed_index, FearGreedCollector
 from components.charts import (
@@ -44,6 +45,7 @@ st.set_page_config(
 )
 
 load_cyberpunk_theme()
+inject_mobile_css()
 
 
 # ============================================

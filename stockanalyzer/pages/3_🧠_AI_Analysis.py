@@ -12,7 +12,10 @@ import time
 
 # Load theme
 from components.cyberpunk_theme import load_cyberpunk_theme
+from utils.mobile_styles import inject_mobile_css
+
 load_cyberpunk_theme()
+inject_mobile_css()
 
 # Import expert engine
 from utils.expert_engine import (

@@ -24,6 +24,7 @@ sys.path.insert(0, str(BASE_DIR))
 from components.cyberpunk_theme import load_cyberpunk_theme
 from utils.config import Config
 from database.db import init_database, check_database_exists, get_database_stats
+from utils.mobile_styles import inject_mobile_css
 
 
 # ============================================
@@ -39,6 +40,9 @@ st.set_page_config(
 
 # Load cyberpunk theme
 load_cyberpunk_theme()
+
+# Inject mobile-responsive CSS
+inject_mobile_css()
 
 
 # ============================================
