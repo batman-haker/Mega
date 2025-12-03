@@ -186,6 +186,12 @@ if ticker_input and analyze_button:
 
         if market_data.get('error'):
             st.error(f"❌ Błąd pobierania danych: {market_data['error']}")
+            st.info("""
+            💡 **Rozwiązanie:**
+            - Poczekaj 30-60 sekund i spróbuj ponownie
+            - Yahoo Finance ma limity requestów - dane są teraz cachowane
+            - Jeśli problem się powtarza, spróbuj innego tickera
+            """)
             st.stop()
 
         # Stage 2: Fetch macro data

@@ -23,11 +23,16 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
+import time
 import yfinance as yf
 import pandas as pd
 import numpy as np
 import google.generativeai as genai
 from utils.config import Config
+
+# Global cache for market data (to avoid hitting rate limits)
+_MARKET_DATA_CACHE = {}
+_CACHE_TTL = 300  # 5 minutes
 
 
 # ============================================
@@ -108,7 +113,7 @@ def calculate_rsi(prices: pd.Series, period: int = 14) -> float:
 
 def get_market_data(ticker: str, period: str = '3mo') -> Dict:
     """
-    Pobiera dane rynkowe o spółce z Yahoo Finance
+    Pobiera dane rynkowe o spółce z Yahoo Finance (z cache i retry logic)
 
     Args:
         ticker: Symbol tickera (np. 'AAPL', 'NVDA')
@@ -132,60 +137,102 @@ def get_market_data(ticker: str, period: str = '3mo') -> Dict:
         >>> print(f"Price: ${data['current_price']:.2f}")
         >>> print(f"RSI: {data['rsi_14']:.1f}")
     """
-    try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        hist = stock.history(period=period)
+    # Check cache first
+    cache_key = f"{ticker}_{period}"
+    if cache_key in _MARKET_DATA_CACHE:
+        cached_data, cached_time = _MARKET_DATA_CACHE[cache_key]
+        if (datetime.now() - cached_time).total_seconds() < _CACHE_TTL:
+            print(f"[INFO] Using cached data for {ticker}")
+            return cached_data
 
-        if hist.empty:
-            raise ValueError(f"No data found for {ticker}")
+    # Retry logic for rate limiting
+    max_retries = 3
+    retry_delay = 2  # seconds
 
-        # Current price and change
-        current_price = hist['Close'].iloc[-1]
-        prev_close = hist['Close'].iloc[-2] if len(hist) > 1 else current_price
-        change_percent = ((current_price - prev_close) / prev_close) * 100
+    for attempt in range(max_retries):
+        try:
+            # Add small delay to avoid rate limiting
+            if attempt > 0:
+                print(f"[INFO] Retry attempt {attempt + 1}/{max_retries} for {ticker}")
+                time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
 
-        # RSI
-        rsi = calculate_rsi(hist['Close'])
+            stock = yf.Ticker(ticker)
 
-        # Trend analysis (simple: 50-day MA)
-        if len(hist) >= 50:
-            ma_50 = hist['Close'].rolling(50).mean().iloc[-1]
-            if current_price > ma_50 * 1.02:
-                trend = "Wzrostowy"
-            elif current_price < ma_50 * 0.98:
-                trend = "Spadkowy"
+            # Fetch history with delay
+            time.sleep(0.5)  # Small delay before request
+            hist = stock.history(period=period)
+
+            if hist.empty:
+                raise ValueError(f"No data found for {ticker}")
+
+            # Fetch info with delay
+            time.sleep(0.5)
+            info = stock.info
+
+            # Current price and change
+            current_price = hist['Close'].iloc[-1]
+            prev_close = hist['Close'].iloc[-2] if len(hist) > 1 else current_price
+            change_percent = ((current_price - prev_close) / prev_close) * 100
+
+            # RSI
+            rsi = calculate_rsi(hist['Close'])
+
+            # Trend analysis (simple: 50-day MA)
+            if len(hist) >= 50:
+                ma_50 = hist['Close'].rolling(50).mean().iloc[-1]
+                if current_price > ma_50 * 1.02:
+                    trend = "Wzrostowy"
+                elif current_price < ma_50 * 0.98:
+                    trend = "Spadkowy"
+                else:
+                    trend = "Boczny"
             else:
-                trend = "Boczny"
-        else:
-            trend = "Brak danych"
+                trend = "Brak danych"
 
-        # 52-week high/low
-        high_52w = hist['High'].max()
-        low_52w = hist['Low'].min()
+            # 52-week high/low
+            high_52w = hist['High'].max()
+            low_52w = hist['Low'].min()
 
-        return {
-            'ticker': ticker,
-            'current_price': round(current_price, 2),
-            'change_percent': round(change_percent, 2),
-            'pe_ratio': info.get('trailingPE', None),
-            'market_cap': info.get('marketCap', None),
-            'rsi_14': round(rsi, 1) if rsi else None,
-            'trend': trend,
-            'volume_avg': int(hist['Volume'].mean()),
-            'high_52w': round(high_52w, 2),
-            'low_52w': round(low_52w, 2),
-            'sector': info.get('sector', 'Unknown'),
-            'industry': info.get('industry', 'Unknown'),
-        }
+            result = {
+                'ticker': ticker,
+                'current_price': round(current_price, 2),
+                'change_percent': round(change_percent, 2),
+                'pe_ratio': info.get('trailingPE', None),
+                'market_cap': info.get('marketCap', None),
+                'rsi_14': round(rsi, 1) if rsi else None,
+                'trend': trend,
+                'volume_avg': int(hist['Volume'].mean()),
+                'high_52w': round(high_52w, 2),
+                'low_52w': round(low_52w, 2),
+                'sector': info.get('sector', 'Unknown'),
+                'industry': info.get('industry', 'Unknown'),
+            }
 
-    except Exception as e:
-        print(f"[ERROR] Failed to fetch market data for {ticker}: {e}")
-        return {
-            'ticker': ticker,
-            'error': str(e),
-            'current_price': None,
-        }
+            # Cache the successful result
+            _MARKET_DATA_CACHE[cache_key] = (result, datetime.now())
+
+            return result
+
+        except Exception as e:
+            error_msg = str(e)
+
+            # Check if it's a rate limiting error
+            if "Too Many Requests" in error_msg or "Rate limit" in error_msg:
+                if attempt < max_retries - 1:
+                    print(f"[WARNING] Rate limited for {ticker}, retrying in {retry_delay * (attempt + 2)}s...")
+                    continue
+                else:
+                    print(f"[ERROR] Rate limit exceeded for {ticker} after {max_retries} attempts")
+            else:
+                print(f"[ERROR] Failed to fetch market data for {ticker}: {e}")
+                break
+
+    # If all retries failed, return error
+    return {
+        'ticker': ticker,
+        'error': 'Rate limit exceeded. Please wait a moment and try again.',
+        'current_price': None,
+    }
 
 
 def get_macro_data() -> Dict:
