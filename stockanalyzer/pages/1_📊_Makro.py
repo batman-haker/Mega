@@ -2273,14 +2273,42 @@ if total_liquidity and selected_asset:
         import yfinance as yf
         import numpy as np
         from scipy import stats
+        import time
 
-        # Fetch asset price data
+        # Fetch asset price data with retry logic (to avoid rate limiting)
         with st.spinner(f"Pobieranie danych dla {available_assets[selected_asset]}..."):
-            ticker = yf.Ticker(selected_asset)
-            asset_hist = ticker.history(period=f"{lookback_days}d")
+            max_retries = 3
+            asset_hist = None
 
-        if asset_hist.empty:
+            for attempt in range(max_retries):
+                try:
+                    if attempt > 0:
+                        wait_time = 2 ** attempt  # Exponential backoff: 2s, 4s, 8s
+                        st.info(f"⏳ Rate limit detected, czekam {wait_time}s... (próba {attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+
+                    # Add small delay before request
+                    time.sleep(0.5)
+                    ticker = yf.Ticker(selected_asset)
+                    asset_hist = ticker.history(period=f"{lookback_days}d")
+
+                    if not asset_hist.empty:
+                        break  # Success!
+
+                except Exception as e:
+                    error_msg = str(e)
+                    if "Too Many Requests" in error_msg or "Rate limit" in error_msg:
+                        if attempt < max_retries - 1:
+                            continue  # Try again
+                        else:
+                            st.error(f"❌ Rate limit exceeded po {max_retries} próbach. Poczekaj 30-60s i spróbuj ponownie.")
+                            asset_hist = None
+                    else:
+                        raise  # Re-raise non-rate-limit errors
+
+        if asset_hist is None or asset_hist.empty:
             st.error(f"❌ Nie udało się pobrać danych dla {selected_asset}")
+            st.info("💡 Poczekaj chwilę i odśwież stronę - Yahoo Finance ma limity requestów.")
         else:
             # Get liquidity historical data (use 'data' key, not 'history')
             # 'history' is just a Series of values, 'data' is DataFrame with date+value columns
