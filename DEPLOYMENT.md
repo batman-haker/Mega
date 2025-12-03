@@ -32,23 +32,28 @@ ls stockanalyzer/data/profiles/*.json
    - **Branch:** main
    - **Main file path:** `stockanalyzer/Home.py`
 
-### Krok 3: Dodanie Secrets (API Keys)
+### Krok 3: Dodanie Secrets (API Keys) ⚠️ WAŻNE!
 
 1. W Streamlit Cloud kliknij **"Advanced settings"** → **"Secrets"**
 
-2. **Wklej konfigurację secrets:**
+2. **Wklej DOKŁADNIE tę konfigurację secrets:**
 
 ```toml
 [gemini]
-api_key = "TWÓJ_GEMINI_API_KEY"
+api_key = "AIzaSyAMvCqrnIPxVXGI0Eok-GMAGw-lG-6Id6A"
 
 [fred]
-api_key = "TWÓJ_FRED_API_KEY"
+api_key = "YOUR_FRED_API_KEY_HERE"
 ```
 
+**⚠️ UWAGA:**
+- **Format musi być DOKŁADNIE taki** - aplikacja automatycznie odczyta `gemini.api_key` i `fred.api_key`
+- Gemini API key jest już podany powyżej
+- FRED API key możesz dodać później (lub użyć "dummy" jeśli nie masz)
+
 3. **Gdzie znaleźć API keys:**
-   - **Gemini API:** https://ai.google.dev/ (Google AI Studio)
-   - **FRED API:** https://fred.stlouisfed.org/docs/api/api_key.html
+   - **Gemini API:** https://ai.google.dev/ (Google AI Studio) - **UŻYWANY KEY:** `AIzaSyAMvCqrnIPxVXGI0Eok-GMAGw-lG-6Id6A`
+   - **FRED API (opcjonalny):** https://fred.stlouisfed.org/docs/api/api_key.html
 
 ### Krok 4: Deploy
 

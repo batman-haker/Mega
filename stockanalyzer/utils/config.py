@@ -25,6 +25,48 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env', override=True)
 
+# Try to import streamlit for cloud secrets support
+try:
+    import streamlit as st
+    _STREAMLIT_AVAILABLE = True
+except ImportError:
+    _STREAMLIT_AVAILABLE = False
+
+
+def _get_secret(key: str, default: str = '', secrets_path: str = None) -> str:
+    """
+    Get secret from Streamlit secrets (cloud) or environment variable (local)
+
+    Priority:
+    1. Streamlit secrets (for cloud deployment)
+    2. Environment variable (for local development)
+    3. Default value
+
+    Args:
+        key: Key name (e.g., 'GOOGLE_API_KEY')
+        default: Default value if not found
+        secrets_path: Path in st.secrets (e.g., 'gemini.api_key')
+    """
+    # Try Streamlit secrets first (for cloud)
+    if _STREAMLIT_AVAILABLE and hasattr(st, 'secrets'):
+        try:
+            if secrets_path:
+                # Navigate nested path (e.g., 'gemini.api_key')
+                parts = secrets_path.split('.')
+                value = st.secrets
+                for part in parts:
+                    value = value[part]
+                if value:
+                    return value
+            # Try direct key
+            if key in st.secrets:
+                return st.secrets[key]
+        except (KeyError, AttributeError):
+            pass
+
+    # Fall back to environment variable
+    return os.getenv(key, default)
+
 
 class Config:
     """Centralna konfiguracja aplikacji STOCKANALYZER"""
@@ -37,16 +79,16 @@ class Config:
     EXPORTS_DIR = BASE_DIR / 'exports'
     STATIC_DIR = BASE_DIR / 'static'
 
-    # External project paths
+    # External project paths (optional, only for local dev)
     FRED_PROJECT_PATH = Path(os.getenv('FRED_PROJECT_PATH', 'C:\\FRED'))
     XSCRAP_CACHE_PATH = Path(os.getenv('XSCRAP_CACHE_PATH', 'C:\\Xscrap\\x-financial-analyzer\\data\\cache'))
 
     # ============================================
-    # API KEYS
+    # API KEYS (supports both st.secrets and .env)
     # ============================================
-    FRED_API_KEY = os.getenv('FRED_API_KEY', '')
-    GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
-    ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+    FRED_API_KEY = _get_secret('FRED_API_KEY', secrets_path='fred.api_key')
+    GOOGLE_API_KEY = _get_secret('GOOGLE_API_KEY', secrets_path='gemini.api_key')
+    ANTHROPIC_API_KEY = _get_secret('ANTHROPIC_API_KEY', secrets_path='anthropic.api_key')
 
     # ============================================
     # AI SETTINGS
@@ -149,22 +191,32 @@ class Config:
         """
         errors = {}
 
-        # Check API Keys
-        if not cls.FRED_API_KEY:
-            errors['FRED_API_KEY'] = 'Brak FRED_API_KEY w pliku .env'
-
+        # Check API Keys (critical for both local and cloud)
         if not cls.GOOGLE_API_KEY:
-            errors['GOOGLE_API_KEY'] = 'Brak GOOGLE_API_KEY w pliku .env'
+            errors['GOOGLE_API_KEY'] = 'Brak GOOGLE_API_KEY (sprawdź .env lub Streamlit secrets)'
 
-        # Check external paths
-        if not cls.FRED_PROJECT_PATH.exists():
-            errors['FRED_PROJECT_PATH'] = f'Katalog FRED nie istnieje: {cls.FRED_PROJECT_PATH}'
+        # FRED API is optional - some features may not work without it
+        if not cls.FRED_API_KEY:
+            # Just a warning, not a blocker
+            pass
 
-        if not cls.XSCRAP_CACHE_PATH.exists():
-            errors['XSCRAP_CACHE_PATH'] = f'Katalog Xscrap cache nie istnieje: {cls.XSCRAP_CACHE_PATH}'
+        # Check external paths (only for local development)
+        # In cloud deployment, these paths don't exist and that's OK
+        is_cloud = _STREAMLIT_AVAILABLE and hasattr(st, 'secrets') and len(st.secrets) > 0
+
+        if not is_cloud:
+            # Only validate paths in local environment
+            if not cls.FRED_PROJECT_PATH.exists():
+                errors['FRED_PROJECT_PATH'] = f'Katalog FRED nie istnieje: {cls.FRED_PROJECT_PATH} (tylko local)'
+
+            if not cls.XSCRAP_CACHE_PATH.exists():
+                errors['XSCRAP_CACHE_PATH'] = f'Katalog Xscrap cache nie istnieje: {cls.XSCRAP_CACHE_PATH} (tylko local)'
 
         # Ensure exports directory exists
-        cls.EXPORTS_DIR.mkdir(exist_ok=True)
+        try:
+            cls.EXPORTS_DIR.mkdir(exist_ok=True, parents=True)
+        except Exception as e:
+            errors['EXPORTS_DIR'] = f'Nie można utworzyć katalogu exports: {e}'
 
         is_valid = len(errors) == 0
         return is_valid, errors
