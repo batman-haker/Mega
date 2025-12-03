@@ -29,12 +29,12 @@
   "decision_logic": [
     {
       "condition": "Spółka jest wyceniana znacznie powyżej wartości księgowej/NAV bez uzasadnienia w zyskach",
-      "reaction": "AVOID / SELL",
+      "action": "AVOID / SELL",
       "reasoning": "To premia spekulacyjna. W długim terminie cena dąży do wartości fundamentalnej. Matematyka jest nieubłagana."
     },
     {
       "condition": "Spółka traci udziały w rynku mimo bycia 'tanim' gigantem (np. Intel)",
-      "reaction": "AVOID",
+      "action": "AVOID",
       "reasoning": "To 'Value Trap'. Technologia nie wybacza zapóźnień. Tanie może stać się jeszcze tańsze."
     }
   ],

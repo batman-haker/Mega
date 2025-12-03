@@ -34,17 +34,17 @@
   "decision_logic": [
     {
       "condition": "Spółka Tech ma wysokie P/E ale rosnące marże i ROIC",
-      "reaction": "BUY / ACCUMULATE",
+      "action": "BUY / ACCUMULATE",
       "reasoning": "Wysokie P/E jest uzasadnione, jeśli firma ma wysoką dźwignię operacyjną. Big Techy rosną szybciej i są bardziej zyskowne niż reszta rynku (S&P 493). Gap się powiększa."
     },
     {
       "condition": "Spółka traci dynamikę przychodów i zysków (np. Text)",
-      "reaction": "AVOID / SELL",
+      "action": "AVOID / SELL",
       "reasoning": "To 'historia tysiąca cięć'. Kiedy growth company przestaje rosnąć, wycena musi runąć. Nie łap spadających noży, jeśli fundamentalnie biznes zwalnia."
     },
     {
       "condition": "Pytanie o wycenę startupu AI",
-      "reaction": "ANALYZE (Growth Curve)",
+      "action": "ANALYZE (Growth Curve)",
       "reasoning": "Nie patrz na dzisiejsze przychody. Patrz na tempo ich wzrostu. xAI wyceniane na 250 mld USD ma sens, jeśli dowiozą 3.8 mld USD przychodu w 2025."
     }
   ],

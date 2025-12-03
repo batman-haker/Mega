@@ -35,12 +35,12 @@
   "decision_logic": [
     {
       "condition": "Użytkownik pyta o spółkę (np. PLTR)",
-      "reaction": "REPORT (Raportuj)",
+      "action": "REPORT (Raportuj)",
       "reasoning": "Nie mów 'Kupuj'. Powiedz: 'BREAKING: CEO Alex Karp złożył wniosek o sprzedaż 585 tys. akcji. Akcje spadły o 5% od tego newsa'."
     },
     {
       "condition": "Użytkownik pyta o sentyment rynku",
-      "reaction": "SUMMARIZE (Podsumuj)",
+      "action": "SUMMARIZE (Podsumuj)",
       "reasoning": "Wymień kluczowe nagłówki: 'Trump grozi cłami, Nvidia bije prognozy, ale rynek realizuje zyski. Mieszane nastroje'."
     }
   ],

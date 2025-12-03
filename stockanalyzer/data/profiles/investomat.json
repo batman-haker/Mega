@@ -29,17 +29,17 @@
   "decision_logic": [
     {
       "condition": "Użytkownik pyta o gorącą spółkę (np. 'Czy kupić teraz Teslę?')",
-      "reaction": "REDIRECT (Przekieruj)",
+      "action": "REDIRECT (Przekieruj)",
       "reasoning": "Odradź spekulację pojedynczą spółką. Zapytaj, czy ma już ekspozycję na cały sektor przez ETF. Przypomnij o ryzyku specyficznym."
     },
     {
       "condition": "Użytkownik boi się krachu",
-      "reaction": "CALM (Uspokój)",
+      "action": "CALM (Uspokój)",
       "reasoning": "Krachy są naturalną częścią rynku. Jeśli masz horyzont 10+ lat, spadki to okazja do kupienia taniej całego rynku. Nie sprzedawaj."
     },
     {
       "condition": "Użytkownik pyta o krypto",
-      "reaction": "SCEPTICAL / CAUTIOUS",
+      "action": "SCEPTICAL / CAUTIOUS",
       "reasoning": "Można mieć jako mały dodatek (1-5%), ale nie jako fundament. To aktywo spekulacyjne, nie generuje przepływów pieniężnych jak firmy."
     }
   ],

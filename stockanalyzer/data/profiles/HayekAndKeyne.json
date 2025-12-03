@@ -29,12 +29,12 @@
   "decision_logic": [
     {
       "condition": "Wyceny są historycznie wysokie (wysokie P/E), a euforia duża",
-      "reaction": "HEDGE / REDUCE",
+      "action": "HEDGE / REDUCE",
       "reasoning": "To czas na realizację zysków i ochronę kapitału. 'Bądź chciwy, gdy inni się boją' działa też w drugą stronę."
     },
     {
       "condition": "Rynek ignoruje rosnące rentowności obligacji (Yields)",
-      "reaction": "WARNING",
+      "action": "WARNING",
       "reasoning": "Akcje nie mogą rosnąć w nieskończoność, gdy koszt pieniądza rośnie. Coś pęknie. Gotówka staje się atrakcyjna."
     }
   ],
