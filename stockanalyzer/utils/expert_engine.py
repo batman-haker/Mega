@@ -30,9 +30,16 @@ import numpy as np
 import google.generativeai as genai
 from utils.config import Config
 
+# Streamlit cache support (optional)
+try:
+    import streamlit as st
+    _STREAMLIT_AVAILABLE = True
+except ImportError:
+    _STREAMLIT_AVAILABLE = False
+
 # Global cache for market data (to avoid hitting rate limits)
 _MARKET_DATA_CACHE = {}
-_CACHE_TTL = 300  # 5 minutes
+_CACHE_TTL = 900  # 15 minutes (increased to reduce API calls)
 
 
 # ============================================
@@ -111,6 +118,14 @@ def calculate_rsi(prices: pd.Series, period: int = 14) -> float:
     return rsi.iloc[-1] if not pd.isna(rsi.iloc[-1]) else None
 
 
+# Cache decorator wrapper (conditional based on Streamlit availability)
+def _cache_if_streamlit(func):
+    """Apply st.cache_data only if Streamlit is available"""
+    if _STREAMLIT_AVAILABLE:
+        return st.cache_data(ttl=900, show_spinner=False)(func)
+    return func
+
+@_cache_if_streamlit
 def get_market_data(ticker: str, period: str = '3mo') -> Dict:
     """
     Pobiera dane rynkowe o spółce z Yahoo Finance (z cache i retry logic)
@@ -147,7 +162,7 @@ def get_market_data(ticker: str, period: str = '3mo') -> Dict:
 
     # Retry logic for rate limiting
     max_retries = 3
-    retry_delay = 2  # seconds
+    retry_delay = 5  # seconds (increased from 2)
 
     for attempt in range(max_retries):
         try:
@@ -159,14 +174,14 @@ def get_market_data(ticker: str, period: str = '3mo') -> Dict:
             stock = yf.Ticker(ticker)
 
             # Fetch history with delay
-            time.sleep(0.5)  # Small delay before request
+            time.sleep(1.5)  # Increased delay before request
             hist = stock.history(period=period)
 
             if hist.empty:
                 raise ValueError(f"No data found for {ticker}")
 
             # Fetch info with delay
-            time.sleep(0.5)
+            time.sleep(1.5)  # Increased delay between requests
             info = stock.info
 
             # Current price and change
@@ -215,22 +230,30 @@ def get_market_data(ticker: str, period: str = '3mo') -> Dict:
 
         except Exception as e:
             error_msg = str(e)
+            print(f"[ERROR] Attempt {attempt + 1}/{max_retries} failed for {ticker}: {error_msg}")
 
             # Check if it's a rate limiting error
-            if "Too Many Requests" in error_msg or "Rate limit" in error_msg:
+            if "Too Many Requests" in error_msg or "Rate limit" in error_msg or "429" in error_msg:
                 if attempt < max_retries - 1:
-                    print(f"[WARNING] Rate limited for {ticker}, retrying in {retry_delay * (attempt + 2)}s...")
+                    wait_time = retry_delay * (attempt + 2)
+                    print(f"[WARNING] Rate limited for {ticker}, retrying in {wait_time}s...")
+                    time.sleep(wait_time)  # Wait before retry
                     continue
                 else:
                     print(f"[ERROR] Rate limit exceeded for {ticker} after {max_retries} attempts")
             else:
+                # Non-rate-limit error - don't retry
                 print(f"[ERROR] Failed to fetch market data for {ticker}: {e}")
-                break
+                return {
+                    'ticker': ticker,
+                    'error': f'Yahoo Finance error: {error_msg[:200]}',  # Show actual error
+                    'current_price': None,
+                }
 
     # If all retries failed, return error
     return {
         'ticker': ticker,
-        'error': 'Rate limit exceeded. Please wait a moment and try again.',
+        'error': 'Rate limit exceeded after multiple retries. Please wait 1-2 minutes and try again.',
         'current_price': None,
     }
 
