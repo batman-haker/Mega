@@ -37,6 +37,16 @@ try:
 except ImportError:
     _STREAMLIT_AVAILABLE = False
 
+# Database cache support (persistent across restarts)
+try:
+    from database.db import get_db_session
+    from database.models import StockCache
+    from sqlalchemy import desc
+    _DB_AVAILABLE = True
+except ImportError:
+    _DB_AVAILABLE = False
+    print("[WARNING] Database not available - cache will not persist")
+
 # Global cache for market data (to avoid hitting rate limits)
 _MARKET_DATA_CACHE = {}
 _CACHE_TTL = 900  # 15 minutes (increased to reduce API calls)
@@ -122,7 +132,8 @@ def calculate_rsi(prices: pd.Series, period: int = 14) -> float:
 def _cache_if_streamlit(func):
     """Apply st.cache_data only if Streamlit is available"""
     if _STREAMLIT_AVAILABLE:
-        return st.cache_data(ttl=900, show_spinner=False)(func)
+        # Increased TTL to 1 hour for Streamlit Cloud (rate limit protection)
+        return st.cache_data(ttl=3600, show_spinner=False)(func)
     return func
 
 @_cache_if_streamlit
@@ -152,12 +163,13 @@ def get_market_data(ticker: str, period: str = '3mo') -> Dict:
         >>> print(f"Price: ${data['current_price']:.2f}")
         >>> print(f"RSI: {data['rsi_14']:.1f}")
     """
-    # Check cache first
+    # Check cache first (both memory and Streamlit cache)
     cache_key = f"{ticker}_{period}"
     if cache_key in _MARKET_DATA_CACHE:
         cached_data, cached_time = _MARKET_DATA_CACHE[cache_key]
-        if (datetime.now() - cached_time).total_seconds() < _CACHE_TTL:
-            print(f"[INFO] Using cached data for {ticker}")
+        # Increased cache TTL to 1 hour to reduce API calls
+        if (datetime.now() - cached_time).total_seconds() < 3600:
+            print(f"[INFO] Using cached data for {ticker} (age: {int((datetime.now() - cached_time).total_seconds())}s)")
             return cached_data
 
     # Retry logic for rate limiting
@@ -180,9 +192,19 @@ def get_market_data(ticker: str, period: str = '3mo') -> Dict:
             if hist.empty:
                 raise ValueError(f"No data found for {ticker}")
 
-            # Fetch info with delay
-            time.sleep(1.5)  # Increased delay between requests
-            info = stock.info
+            # Fetch info with delay - THIS IS THE RATE LIMITED ENDPOINT
+            time.sleep(2.0)  # Even longer delay before info
+            try:
+                info = stock.info
+            except Exception as info_error:
+                print(f"[WARNING] Failed to fetch info for {ticker}: {info_error}")
+                # Use minimal info if .info fails
+                info = {
+                    'trailingPE': None,
+                    'marketCap': None,
+                    'sector': 'Unknown',
+                    'industry': 'Unknown'
+                }
 
             # Current price and change
             current_price = hist['Close'].iloc[-1]
