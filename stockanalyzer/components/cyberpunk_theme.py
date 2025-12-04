@@ -124,6 +124,29 @@ def load_cyberpunk_theme():
             text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
         }
 
+        /* Hide ugly Material Icons text (keyboard_double_arrow_right etc) */
+        [data-testid="collapsedControl"] span,
+        [data-testid="stSidebarCollapsedControl"] span,
+        button[kind="header"] span {
+            font-size: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* Replace with Unicode arrows */
+        [data-testid="collapsedControl"]::after {
+            content: "◀" !important;
+            font-size: 1.5rem !important;
+            color: #00f5ff !important;
+            display: inline-block !important;
+        }
+
+        [data-testid="stSidebarCollapsedControl"]::after {
+            content: "▶" !important;
+            font-size: 1.5rem !important;
+            color: #00f5ff !important;
+            display: inline-block !important;
+        }
+
         /* ============================================ */
         /* BUTTONS */
         /* ============================================ */
