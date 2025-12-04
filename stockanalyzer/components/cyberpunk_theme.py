@@ -31,7 +31,40 @@ def load_cyberpunk_theme():
         /* FONTS */
         /* ============================================ */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&family=Share+Tech+Mono&display=swap');
-        @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+        @import url('https://fonts.googleapis.com/css2?family=Material+Icons&family=Material+Icons+Outlined&family=Material+Icons+Round&display=swap');
+
+        /* Material Icons Fix - ensure icons render properly */
+        .material-icons,
+        .material-icons-outlined,
+        .material-icons-round,
+        span[data-baseweb="icon"],
+        [class*="material-symbols"] {
+            font-family: 'Material Icons', 'Material Icons Outlined', 'Material Icons Round' !important;
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'liga';
+        }
+
+        /* Streamlit expander icons fix */
+        [data-testid="stExpander"] [data-testid="stExpanderToggleIcon"] {
+            font-family: 'Material Icons' !important;
+        }
+
+        /* Streamlit sidebar navigation icons */
+        [data-testid="stSidebarNav"] span {
+            font-family: 'Material Icons' !important;
+        }
 
         /* ============================================ */
         /* GLOBAL STYLES */
