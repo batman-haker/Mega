@@ -31,6 +31,7 @@ def load_cyberpunk_theme():
         /* FONTS */
         /* ============================================ */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
         /* ============================================ */
         /* GLOBAL STYLES */
