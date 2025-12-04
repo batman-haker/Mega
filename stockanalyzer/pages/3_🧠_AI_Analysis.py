@@ -186,12 +186,24 @@ if ticker_input and analyze_button:
 
         if market_data.get('error'):
             st.error(f"❌ Błąd pobierania danych: {market_data['error']}")
-            st.info("""
-            💡 **Rozwiązanie:**
-            - Poczekaj 30-60 sekund i spróbuj ponownie
-            - Yahoo Finance ma limity requestów - dane są teraz cachowane
-            - Jeśli problem się powtarza, spróbuj innego tickera
-            """)
+
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.info("""
+                💡 **Rozwiązanie:**
+                - **Poczekaj 1-2 minuty** i spróbuj ponownie
+                - Yahoo Finance ma restrykcyjne limity API
+                - **Dane są cachowane przez 1 godzinę** - kolejne zapytania będą szybkie
+                - Jeśli używasz Streamlit Cloud, spróbuj **Clear cache** (menu ⋮)
+                - Jeśli problem się powtarza, spróbuj innego tickera
+                """)
+            with col2:
+                st.markdown("""
+                **🔧 Clear Cache:**
+                1. Kliknij ⋮ (góra-prawo)
+                2. "Clear cache"
+                3. Odśwież stronę
+                """)
             st.stop()
 
         # Stage 2: Fetch macro data
