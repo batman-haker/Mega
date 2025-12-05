@@ -138,51 +138,51 @@ def load_cyberpunk_theme():
             text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
         }
 
-        /* MAXIMUM BRUTALITY: Hide buttons entirely and replace */
+        /* CORRECT SELECTORS: Based on actual HTML structure from DevTools */
 
-        /* Make button container empty */
-        [data-testid="collapsedControl"],
-        [data-testid="stSidebarCollapsedControl"] {
+        /* Target the collapse button container */
+        [data-testid="stSidebarCollapseButton"] {
             position: relative !important;
             width: 40px !important;
             height: 40px !important;
+        }
+
+        /* HIDE the Material Icons text completely */
+        [data-testid="stIconMaterial"] {
             font-size: 0 !important;
             color: transparent !important;
+            text-indent: -9999px !important;
+            display: block !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+        }
+
+        /* Hide all spans and children inside button */
+        [data-testid="stSidebarCollapseButton"] span,
+        [data-testid="stSidebarCollapseButton"] span * {
+            font-size: 0 !important;
+            color: transparent !important;
+            opacity: 0 !important;
+        }
+
+        /* Style the actual button */
+        [data-testid="stBaseButton-headerNoPadding"] {
+            position: relative !important;
+            width: 40px !important;
+            height: 40px !important;
             background: #000000 !important;
             overflow: hidden !important;
         }
 
-        /* HIDE EVERYTHING INSIDE - all possible selectors */
-        [data-testid="collapsedControl"] > *,
-        [data-testid="stSidebarCollapsedControl"] > *,
-        [data-testid="collapsedControl"] span,
-        [data-testid="stSidebarCollapsedControl"] span,
-        [data-testid="collapsedControl"] div,
-        [data-testid="stSidebarCollapsedControl"] div,
-        [data-testid="collapsedControl"] button,
-        [data-testid="stSidebarCollapsedControl"] button,
-        [data-testid="collapsedControl"] svg,
-        [data-testid="stSidebarCollapsedControl"] svg {
-            display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            width: 0 !important;
-            height: 0 !important;
-            position: absolute !important;
-            left: -99999px !important;
-            font-size: 0 !important;
-            color: transparent !important;
-        }
-
-        /* Create new arrow overlay - TWO layers for safety */
-        [data-testid="collapsedControl"]::before,
-        [data-testid="collapsedControl"]::after {
+        /* Draw arrow using ::after on the button container */
+        [data-testid="stSidebarCollapseButton"]::after {
             content: "◀" !important;
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
             width: 40px !important;
             height: 40px !important;
             display: flex !important;
@@ -197,26 +197,10 @@ def load_cyberpunk_theme():
             pointer-events: none !important;
         }
 
-        [data-testid="stSidebarCollapsedControl"]::before,
-        [data-testid="stSidebarCollapsedControl"]::after {
+        /* When sidebar is collapsed, use different arrow */
+        [data-testid="stSidebar"][aria-expanded="false"] + * [data-testid="stSidebarCollapseButton"]::after,
+        body:not(:has([data-testid="stSidebar"])) [data-testid="stSidebarCollapseButton"]::after {
             content: "▶" !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 40px !important;
-            height: 40px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 28px !important;
-            font-weight: bold !important;
-            color: #00ff00 !important;
-            background: #000000 !important;
-            z-index: 999999 !important;
-            font-family: Arial, sans-serif !important;
-            pointer-events: none !important;
         }
 
         /* ============================================ */
