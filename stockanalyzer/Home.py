@@ -76,12 +76,12 @@ with st.sidebar:
     st.markdown("""
     **Podstrony aplikacji:**
 
-    1. **Makro** - Analiza makroekonomiczna
-    2. **Stock** - Dane giełdowe (fundame ntals + technicals)
-    3. **Twitter** - Sentiment ekspertów
-    4. **AI Analysis** - Kompleksowa analiza AI
+    1. **📊 Makro** - Analiza makroekonomiczna
+    2. **📈 Stock** - Dane giełdowe (fundamentals + technicals)
+    3. **🧠 AI Analysis** - Kompleksowa analiza AI
+    4. **🎮 Gra** - Historyczny Inwestor (edukacyjna gra!)
 
-    *(Wkrótce dostępne)*
+    Wybierz stronę z menu bocznego ←
     """)
 
     st.markdown("---")
@@ -174,24 +174,24 @@ with col2:
 
 with col3:
     st.markdown("""
-    ### 🐦 Twitter
-    **Sentiment ekspertów**
+    ### 🧠 AI Analysis
+    **Kompleksowa analiza**
 
-    - 6 ekspertów finansowych
-    - Keyword analysis
-    - LLM sentiment (Gemini)
-    - Timeline sentiment
+    - Multi-source fusion
+    - AI rekomendacje (Gemini)
+    - Risk analysis
+    - Scoring system
     """)
 
 with col4:
     st.markdown("""
-    ### 🤖 AI Analysis
-    **Kompleksowa analiza**
+    ### 🎮 Gra
+    **Historyczny Inwestor**
 
-    - Multi-source fusion
-    - AI rekomendacje
-    - Risk analysis
-    - Export do PDF
+    - Kryzysy finansowe
+    - Wielki Kryzys, DotCom
+    - Black Monday, Subprime
+    - Edukacja przez zabawę
     """)
 
 st.markdown("---")
