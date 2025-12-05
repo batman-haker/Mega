@@ -131,9 +131,42 @@ def load_cyberpunk_theme():
             color: #00f5ff !important;
         }
 
-        /* Hide Material Icons text fallback if icons don't load */
-        .material-icons-round {
-            font-size: 1.5rem !important;
+        /* Force Material Icons to use icon font, hide text fallback */
+        [data-testid="collapsedControl"] span,
+        [data-testid="stSidebarCollapsedControl"] span {
+            font-family: 'Material Icons', 'Material Icons Round' !important;
+            font-size: 24px !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: clip !important;
+        }
+
+        /* Hide keyboard text specifically */
+        [data-testid="collapsedControl"] span::before,
+        [data-testid="stSidebarCollapsedControl"] span::before {
+            content: '' !important;
+        }
+
+        /* If Material Icons fail to load, show Unicode arrows as fallback */
+        @supports not (font-family: 'Material Icons') {
+            [data-testid="collapsedControl"] span {
+                font-family: Arial, sans-serif !important;
+                font-size: 0 !important;
+            }
+            [data-testid="collapsedControl"] span::after {
+                content: '◀' !important;
+                font-size: 24px !important;
+            }
+            [data-testid="stSidebarCollapsedControl"] span {
+                font-family: Arial, sans-serif !important;
+                font-size: 0 !important;
+            }
+            [data-testid="stSidebarCollapsedControl"] span::after {
+                content: '▶' !important;
+                font-size: 24px !important;
+            }
         }
 
         /* ============================================ */
