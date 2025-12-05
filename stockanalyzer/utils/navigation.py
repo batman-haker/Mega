@@ -14,15 +14,17 @@ def render_top_navigation(current_page="Home"):
         current_page: Current page name to highlight
     """
 
-    # Simple text navigation with markdown
+    # Simple text navigation with markdown - LOWER Z-INDEX
     st.markdown("""
     <div style="background: linear-gradient(90deg, rgba(10, 14, 39, 0.98) 0%, rgba(26, 26, 46, 0.98) 100%);
-                padding: 1rem;
-                margin: -1rem -1rem 1rem -1rem;
+                padding: 0.5rem;
+                margin: -1rem -1rem 0.5rem -1rem;
                 border-bottom: 2px solid rgba(0, 245, 255, 0.4);
-                text-align: center;">
-        <span style="color: #00f5ff; font-family: 'Orbitron', sans-serif; font-size: 0.9rem;">
-            📱 <strong>Nawigacja:</strong> Użyj menu bocznego (przycisk ◀ w lewym górnym rogu) aby przełączać strony
+                text-align: center;
+                position: relative;
+                z-index: 1;">
+        <span style="color: #00f5ff; font-family: 'Orbitron', sans-serif; font-size: 0.85rem;">
+            📱 <strong>Nawigacja:</strong> Kliknij czerwony przycisk MENU poniżej
         </span>
     </div>
     """, unsafe_allow_html=True)

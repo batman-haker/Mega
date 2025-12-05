@@ -17,9 +17,10 @@ def render_mobile_menu_button():
     /* HUGE Mobile Menu Button - JASKRAWO CZERWONY */
     .mobile-menu-btn {
         position: fixed;
-        top: 1rem;
-        left: 1rem;
-        z-index: 999999999;
+        top: 5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999999999;
         background: linear-gradient(135deg, #ff0000 0%, #ff3333 100%);
         color: #ffffff;
         border: 4px solid #ffff00;
