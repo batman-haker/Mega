@@ -14,22 +14,45 @@ def inject_mobile_css():
        MOBILE RESPONSIVE STYLES
        ======================================== */
 
-    /* Base responsive containers */
+    /* FORCE SIDEBAR BUTTON TO BE VISIBLE ON MOBILE */
     @media (max-width: 768px) {
+        /* Make sidebar collapse button ALWAYS visible */
+        [data-testid="stSidebarCollapseButton"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            top: 1rem !important;
+            left: 1rem !important;
+            z-index: 999999 !important;
+            background: rgba(0, 245, 255, 0.9) !important;
+            border-radius: 8px !important;
+            padding: 0.5rem !important;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.6) !important;
+        }
+
+        /* Sidebar should slide in from left */
+        section[data-testid="stSidebar"] {
+            width: 80% !important;
+            max-width: 300px !important;
+            min-width: 250px !important;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            height: 100vh !important;
+            z-index: 999998 !important;
+            transform: translateX(-100%) !important;
+            transition: transform 0.3s ease !important;
+        }
+
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+        }
+
         /* Main content area */
         .main .block-container {
-            padding: 1rem 1rem !important;
+            padding: 4rem 1rem 1rem 1rem !important;
             max-width: 100% !important;
-        }
-
-        /* Sidebar */
-        section[data-testid="stSidebar"] {
-            width: 100% !important;
-            min-width: 100% !important;
-        }
-
-        section[data-testid="stSidebar"] > div {
-            width: 100% !important;
         }
 
         /* Metrics - stack vertically on mobile */

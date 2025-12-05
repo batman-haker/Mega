@@ -25,6 +25,7 @@ from components.cyberpunk_theme import load_cyberpunk_theme
 from utils.config import Config
 from database.db import init_database, check_database_exists, get_database_stats
 from utils.mobile_styles import inject_mobile_css
+from utils.navigation import render_top_navigation, render_mobile_menu_hint
 
 
 # ============================================
@@ -62,6 +63,13 @@ def initialize_app():
 
 # Initialize on first run
 initialize_app()
+
+
+# ============================================
+# TOP NAVIGATION (Mobile-Friendly)
+# ============================================
+
+render_top_navigation(current_page="Home")
 
 
 # ============================================
@@ -124,6 +132,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("---")
+
+# Mobile hint
+render_mobile_menu_hint()
 
 # Description
 col1, col2, col3 = st.columns([1, 2, 1])
