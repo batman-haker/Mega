@@ -138,63 +138,85 @@ def load_cyberpunk_theme():
             text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
         }
 
-        /* NUCLEAR OPTION: Completely cover sidebar buttons and redraw arrows */
+        /* MAXIMUM BRUTALITY: Hide buttons entirely and replace */
+
+        /* Make button container empty */
         [data-testid="collapsedControl"],
         [data-testid="stSidebarCollapsedControl"] {
             position: relative !important;
-            overflow: hidden !important;
             width: 40px !important;
             height: 40px !important;
-            text-indent: -9999px !important;
-            white-space: nowrap !important;
+            font-size: 0 !important;
+            color: transparent !important;
+            background: #000000 !important;
+            overflow: hidden !important;
         }
 
-        /* Cover ALL children with opaque background */
-        [data-testid="collapsedControl"] *,
-        [data-testid="stSidebarCollapsedControl"] * {
+        /* HIDE EVERYTHING INSIDE - all possible selectors */
+        [data-testid="collapsedControl"] > *,
+        [data-testid="stSidebarCollapsedControl"] > *,
+        [data-testid="collapsedControl"] span,
+        [data-testid="stSidebarCollapsedControl"] span,
+        [data-testid="collapsedControl"] div,
+        [data-testid="stSidebarCollapsedControl"] div,
+        [data-testid="collapsedControl"] button,
+        [data-testid="stSidebarCollapsedControl"] button,
+        [data-testid="collapsedControl"] svg,
+        [data-testid="stSidebarCollapsedControl"] svg {
+            display: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            position: absolute !important;
+            left: -99999px !important;
+            font-size: 0 !important;
+            color: transparent !important;
         }
 
-        /* Draw arrows on TOP using ::after (higher z-index) */
+        /* Create new arrow overlay - TWO layers for safety */
+        [data-testid="collapsedControl"]::before,
         [data-testid="collapsedControl"]::after {
             content: "◀" !important;
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             width: 40px !important;
             height: 40px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 24px !important;
+            font-size: 28px !important;
+            font-weight: bold !important;
             color: #00ff00 !important;
             background: #000000 !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            z-index: 9999 !important;
+            z-index: 999999 !important;
             font-family: Arial, sans-serif !important;
-            text-indent: 0 !important;
+            pointer-events: none !important;
         }
 
+        [data-testid="stSidebarCollapsedControl"]::before,
         [data-testid="stSidebarCollapsedControl"]::after {
             content: "▶" !important;
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             width: 40px !important;
             height: 40px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 24px !important;
+            font-size: 28px !important;
+            font-weight: bold !important;
             color: #00ff00 !important;
             background: #000000 !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            z-index: 9999 !important;
+            z-index: 999999 !important;
             font-family: Arial, sans-serif !important;
-            text-indent: 0 !important;
+            pointer-events: none !important;
         }
 
         /* ============================================ */
