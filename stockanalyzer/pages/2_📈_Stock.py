@@ -26,6 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from collectors.stock_collector import get_stock_data
 from components.cyberpunk_theme import apply_chart_theme
 from utils.constants import CHART_COLORS, REGIME_COLORS
+from utils.mobile_styles import inject_mobile_css
+from utils.navigation import render_top_navigation
 from utils.education import (
     get_indicator_help,
     interpret_value,
@@ -48,6 +50,8 @@ st.set_page_config(
 # Load cyberpunk theme
 from components.cyberpunk_theme import load_cyberpunk_theme
 load_cyberpunk_theme()
+inject_mobile_css()
+render_top_navigation(current_page="Stock")
 
 # ============================================
 # HEADER

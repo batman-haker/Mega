@@ -13,9 +13,11 @@ import time
 # Load theme
 from components.cyberpunk_theme import load_cyberpunk_theme
 from utils.mobile_styles import inject_mobile_css
+from utils.navigation import render_top_navigation
 
 load_cyberpunk_theme()
 inject_mobile_css()
+render_top_navigation(current_page="AI Analysis")
 
 # Import expert engine
 from utils.expert_engine import (
@@ -108,7 +110,7 @@ with col_input2:
         selected_experts = st.multiselect(
             "Wybierz Ekspertów",
             options=expert_names,
-            default=expert_names,  # All selected by default
+            default=[],  # Empty by default - user selects
             help="Wybierz, których ekspertów chcesz skonsultować"
         )
     else:

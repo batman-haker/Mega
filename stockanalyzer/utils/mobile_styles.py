@@ -4,31 +4,83 @@ Provides CSS and helper functions for mobile-friendly UI
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 def inject_mobile_css():
     """Inject mobile-responsive CSS into Streamlit app"""
+
+    # First, inject JavaScript to force sidebar button visibility
+    components.html("""
+    <script>
+    // Force sidebar collapse button to be visible
+    function ensureSidebarButtonVisible() {
+        const selectors = [
+            '[data-testid="stSidebarCollapseButton"]',
+            '[data-testid="collapsedControl"]',
+            'button[kind="header"]',
+            'section[data-testid="stSidebar"] button'
+        ];
+
+        selectors.forEach(selector => {
+            const buttons = parent.document.querySelectorAll(selector);
+            buttons.forEach(button => {
+                button.style.display = 'flex !important';
+                button.style.visibility = 'visible !important';
+                button.style.opacity = '1 !important';
+                button.style.zIndex = '999999';
+            });
+        });
+    }
+
+    // Run on page load
+    window.addEventListener('load', ensureSidebarButtonVisible);
+    // Run periodically in case Streamlit re-renders
+    setInterval(ensureSidebarButtonVisible, 500);
+    // Run immediately
+    ensureSidebarButtonVisible();
+    </script>
+    """, height=0)
+
     st.markdown("""
     <style>
     /* ========================================
        MOBILE RESPONSIVE STYLES
        ======================================== */
 
-    /* FORCE SIDEBAR BUTTON TO BE VISIBLE ON MOBILE */
+    /* FORCE SIDEBAR BUTTON TO BE ALWAYS VISIBLE */
+    /* Multiple selectors for different Streamlit versions */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarNav"] button,
+    button[kind="header"],
+    section[data-testid="stSidebar"] button[aria-label*="collapse"],
+    section[data-testid="stSidebar"] button[aria-label*="Collapse"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 999999 !important;
+    }
+
+    /* Ensure header area is visible */
+    [data-testid="stHeader"] {
+        display: block !important;
+        visibility: visible !important;
+    }
+
     @media (max-width: 768px) {
-        /* Make sidebar collapse button ALWAYS visible */
-        [data-testid="stSidebarCollapseButton"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
+        /* Enhanced visibility on mobile */
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="collapsedControl"],
+        button[kind="header"] {
             position: fixed !important;
             top: 1rem !important;
             left: 1rem !important;
-            z-index: 999999 !important;
-            background: rgba(0, 245, 255, 0.9) !important;
+            background: rgba(0, 245, 255, 0.95) !important;
             border-radius: 8px !important;
-            padding: 0.5rem !important;
-            box-shadow: 0 0 20px rgba(0, 245, 255, 0.6) !important;
+            padding: 0.6rem !important;
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.8) !important;
+            border: 2px solid #00f5ff !important;
         }
 
         /* Sidebar should slide in from left */

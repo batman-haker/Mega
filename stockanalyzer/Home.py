@@ -26,7 +26,6 @@ from utils.config import Config
 from database.db import init_database, check_database_exists, get_database_stats
 from utils.mobile_styles import inject_mobile_css
 from utils.navigation import render_top_navigation, render_mobile_menu_hint
-from utils.mobile_menu_button import render_mobile_menu_button
 
 
 # ============================================
@@ -67,14 +66,7 @@ initialize_app()
 
 
 # ============================================
-# MOBILE MENU BUTTON (JavaScript Force Toggle)
-# ============================================
-
-render_mobile_menu_button()
-
-
-# ============================================
-# TOP NAVIGATION (Mobile-Friendly)
+# TOP NAVIGATION (Fixed at Top)
 # ============================================
 
 render_top_navigation(current_page="Home")

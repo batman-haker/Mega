@@ -21,6 +21,7 @@ sys.path.insert(0, str(BASE_DIR))
 # Import custom modules
 from components.cyberpunk_theme import load_cyberpunk_theme
 from utils.mobile_styles import inject_mobile_css
+from utils.navigation import render_top_navigation
 
 
 # ============================================
@@ -39,6 +40,9 @@ load_cyberpunk_theme()
 
 # Inject mobile-responsive CSS
 inject_mobile_css()
+
+# Render top navigation
+render_top_navigation(current_page="Gra")
 
 
 # ============================================
