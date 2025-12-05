@@ -78,6 +78,47 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # Cloud Save/Load (Optional Supabase Integration)
+    st.markdown("### ☁️ Zapisz w Chmurze")
+
+    with st.expander("📤 Backup & Restore", expanded=False):
+        st.markdown("""
+        **Zapisz postęp w chmurze** i graj na różnych urządzeniach!
+
+        ⚠️ **UWAGA:** To funkcja eksperymentalna.
+        Gra działa normalnie bez tego - używa lokalnego zapisu.
+        """)
+
+        # User ID input
+        user_id_input = st.text_input(
+            "Twój ID",
+            value="",
+            placeholder="np. twoj_email@gmail.com",
+            help="Użyj unikalnego ID (np. email) aby zidentyfikować swoje zapisy"
+        )
+
+        # Save to cloud button
+        if st.button("📤 Zapisz do Chmury", use_container_width=True):
+            if not user_id_input.strip():
+                st.warning("⚠️ Podaj swój ID aby zapisać grę")
+            else:
+                st.info("🔄 Funkcja w budowie... Zapisywanie do Supabase zostanie wkrótce dodane!")
+                # TODO: Implement cloud save
+                # 1. Extract localStorage data via JavaScript
+                # 2. Save to Supabase using supabase_client.save_game()
+
+        # Load from cloud button
+        if st.button("📥 Wczytaj z Chmury", use_container_width=True):
+            if not user_id_input.strip():
+                st.warning("⚠️ Podaj swój ID aby wczytać grę")
+            else:
+                st.info("🔄 Funkcja w budowie... Wczytywanie z Supabase zostanie wkrótce dodane!")
+                # TODO: Implement cloud load
+                # 1. Load from Supabase using supabase_client.list_user_saves()
+                # 2. Inject data back to localStorage via JavaScript
+
+    st.markdown("---")
+
     st.info("💡 **TIP:** Gra uruchamia się poniżej. Przewiń w dół aby zagrać!")
 
 
