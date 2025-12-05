@@ -14,26 +14,27 @@ def render_mobile_menu_button():
 
     components.html("""
     <style>
-    /* HUGE Mobile Menu Button - always visible */
+    /* HUGE Mobile Menu Button - JASKRAWO CZERWONY */
     .mobile-menu-btn {
         position: fixed;
         top: 1rem;
         left: 1rem;
         z-index: 999999999;
-        background: linear-gradient(135deg, #00f5ff 0%, #00d4ff 100%);
-        color: #0a0e27;
-        border: 3px solid #00f5ff;
+        background: linear-gradient(135deg, #ff0000 0%, #ff3333 100%);
+        color: #ffffff;
+        border: 4px solid #ffff00;
         border-radius: 12px;
         padding: 1rem 1.5rem;
-        font-size: 1.5rem;
-        font-weight: bold;
+        font-size: 1.8rem;
+        font-weight: 900;
         font-family: 'Orbitron', sans-serif;
-        box-shadow: 0 0 30px rgba(0, 245, 255, 0.8);
+        box-shadow: 0 0 40px rgba(255, 0, 0, 1), 0 0 20px rgba(255, 255, 0, 0.8);
         cursor: pointer;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        animation: pulse 2s infinite;
+        animation: pulse 1s infinite;
+        text-shadow: 0 0 10px rgba(255, 255, 0, 1);
     }
 
     .mobile-menu-btn:active {
@@ -41,8 +42,14 @@ def render_mobile_menu_button():
     }
 
     @keyframes pulse {
-        0%, 100% { box-shadow: 0 0 30px rgba(0, 245, 255, 0.8); }
-        50% { box-shadow: 0 0 50px rgba(0, 245, 255, 1); }
+        0%, 100% {
+            box-shadow: 0 0 40px rgba(255, 0, 0, 1), 0 0 20px rgba(255, 255, 0, 0.8);
+            transform: scale(1);
+        }
+        50% {
+            box-shadow: 0 0 60px rgba(255, 0, 0, 1), 0 0 40px rgba(255, 255, 0, 1);
+            transform: scale(1.05);
+        }
     }
 
     /* Hide on desktop */
