@@ -111,10 +111,24 @@ def load_cyberpunk_theme():
         /* SIDEBAR */
         /* ============================================ */
 
+        /* 🧪 TEST: GREEN SIDEBAR - sprawdzamy czy CSS się wczytuje w Streamlit Cloud */
         [data-testid="stSidebar"] {
-            background: rgba(10, 14, 39, 0.98) !important;
-            border-right: 2px solid rgba(0, 245, 255, 0.4);
-            box-shadow: 5px 0 20px rgba(0, 245, 255, 0.1);
+            background: linear-gradient(180deg, #00ff00 0%, #00aa00 100%) !important;
+            border-right: 5px solid #ffff00 !important;
+            box-shadow: 5px 0 30px rgba(0, 255, 0, 0.8) !important;
+        }
+
+        /* TEST BANNER */
+        [data-testid="stSidebar"]::before {
+            content: "🧪 CSS TEST - WERSJA ZIELONA 🧪" !important;
+            display: block !important;
+            background: #ff0000 !important;
+            color: #ffffff !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            padding: 10px !important;
+            margin: -1rem -1rem 1rem -1rem !important;
         }
 
         [data-testid="stSidebar"] h1,
@@ -135,7 +149,10 @@ def load_cyberpunk_theme():
 
         /* Hide ALL text inside sidebar buttons (keyboard_arrow, etc) */
         [data-testid="collapsedControl"] *,
-        [data-testid="stSidebarCollapsedControl"] * {
+        [data-testid="stSidebarCollapsedControl"] *,
+        [data-testid="collapsedControl"] span,
+        [data-testid="stSidebarCollapsedControl"] span,
+        button[kind="header"] span {
             font-size: 0 !important;
             line-height: 0 !important;
             visibility: hidden !important;
@@ -144,6 +161,9 @@ def load_cyberpunk_theme():
             overflow: hidden !important;
             position: absolute !important;
             left: -9999px !important;
+            text-indent: -9999px !important;
+            display: none !important;
+            color: transparent !important;
         }
 
         /* Replace with clean Unicode arrows */
