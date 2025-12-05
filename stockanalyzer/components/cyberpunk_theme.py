@@ -111,24 +111,10 @@ def load_cyberpunk_theme():
         /* SIDEBAR */
         /* ============================================ */
 
-        /* 🧪 TEST: GREEN SIDEBAR - sprawdzamy czy CSS się wczytuje w Streamlit Cloud */
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #00ff00 0%, #00aa00 100%) !important;
-            border-right: 5px solid #ffff00 !important;
-            box-shadow: 5px 0 30px rgba(0, 255, 0, 0.8) !important;
-        }
-
-        /* TEST BANNER */
-        [data-testid="stSidebar"]::before {
-            content: "🧪 CSS TEST - WERSJA ZIELONA 🧪" !important;
-            display: block !important;
-            background: #ff0000 !important;
-            color: #ffffff !important;
-            font-size: 16px !important;
-            font-weight: bold !important;
-            text-align: center !important;
-            padding: 10px !important;
-            margin: -1rem -1rem 1rem -1rem !important;
+            background: rgba(10, 14, 39, 0.98) !important;
+            border-right: 2px solid rgba(0, 245, 255, 0.4);
+            box-shadow: 5px 0 20px rgba(0, 245, 255, 0.1);
         }
 
         [data-testid="stSidebar"] h1,
@@ -173,7 +159,7 @@ def load_cyberpunk_theme():
             position: relative !important;
             width: 40px !important;
             height: 40px !important;
-            background: #000000 !important;
+            background: rgba(10, 14, 39, 0.8) !important;
             overflow: hidden !important;
         }
 
@@ -188,10 +174,10 @@ def load_cyberpunk_theme():
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 28px !important;
+            font-size: 24px !important;
             font-weight: bold !important;
-            color: #00ff00 !important;
-            background: #000000 !important;
+            color: #00f5ff !important;
+            background: rgba(10, 14, 39, 0.8) !important;
             z-index: 999999 !important;
             font-family: Arial, sans-serif !important;
             pointer-events: none !important;
