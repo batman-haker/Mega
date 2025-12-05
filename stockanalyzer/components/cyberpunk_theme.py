@@ -124,49 +124,55 @@ def load_cyberpunk_theme():
             text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
         }
 
-        /* Sidebar collapse button styling */
+        /* Sidebar collapse button - AGGRESSIVELY hide Material Icons text fallback */
         [data-testid="collapsedControl"],
-        [data-testid="stSidebarCollapsedControl"],
-        button[kind="header"] {
+        [data-testid="stSidebarCollapsedControl"] {
             color: #00f5ff !important;
-        }
-
-        /* Force Material Icons to use icon font, hide text fallback */
-        [data-testid="collapsedControl"] span,
-        [data-testid="stSidebarCollapsedControl"] span {
-            font-family: 'Material Icons', 'Material Icons Round' !important;
-            font-size: 24px !important;
-            line-height: 1 !important;
-            text-indent: 0 !important;
-            white-space: nowrap !important;
             overflow: hidden !important;
-            text-overflow: clip !important;
+            width: 40px !important;
+            height: 40px !important;
         }
 
-        /* Hide keyboard text specifically */
-        [data-testid="collapsedControl"] span::before,
-        [data-testid="stSidebarCollapsedControl"] span::before {
-            content: '' !important;
+        /* Hide ALL text inside sidebar buttons (keyboard_arrow, etc) */
+        [data-testid="collapsedControl"] *,
+        [data-testid="stSidebarCollapsedControl"] * {
+            font-size: 0 !important;
+            line-height: 0 !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
         }
 
-        /* If Material Icons fail to load, show Unicode arrows as fallback */
-        @supports not (font-family: 'Material Icons') {
-            [data-testid="collapsedControl"] span {
-                font-family: Arial, sans-serif !important;
-                font-size: 0 !important;
-            }
-            [data-testid="collapsedControl"] span::after {
-                content: '◀' !important;
-                font-size: 24px !important;
-            }
-            [data-testid="stSidebarCollapsedControl"] span {
-                font-family: Arial, sans-serif !important;
-                font-size: 0 !important;
-            }
-            [data-testid="stSidebarCollapsedControl"] span::after {
-                content: '▶' !important;
-                font-size: 24px !important;
-            }
+        /* Replace with clean Unicode arrows */
+        [data-testid="collapsedControl"]::before {
+            content: "◀" !important;
+            font-size: 24px !important;
+            line-height: 40px !important;
+            visibility: visible !important;
+            position: absolute !important;
+            left: 8px !important;
+            top: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            color: #00f5ff !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        [data-testid="stSidebarCollapsedControl"]::before {
+            content: "▶" !important;
+            font-size: 24px !important;
+            line-height: 40px !important;
+            visibility: visible !important;
+            position: absolute !important;
+            left: 8px !important;
+            top: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            color: #00f5ff !important;
+            font-family: Arial, sans-serif !important;
         }
 
         /* ============================================ */
