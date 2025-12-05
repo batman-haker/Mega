@@ -36,7 +36,7 @@ st.set_page_config(
     page_title="STOCKANALYZER - AI Investment Advisor",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"  # ALWAYS expanded - mobile friendly
 )
 
 # Load cyberpunk theme

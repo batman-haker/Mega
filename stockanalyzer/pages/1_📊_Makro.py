@@ -41,7 +41,8 @@ from utils.financial_glossary import get_explanation, get_all_terms
 st.set_page_config(
     page_title="Makro Analysis - STOCKANALYZER",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 load_cyberpunk_theme()

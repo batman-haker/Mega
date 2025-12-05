@@ -33,7 +33,8 @@ from utils.expert_engine import (
 st.set_page_config(
     page_title="AI Analysis - STOCKANALYZER",
     page_icon="🧠",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 
